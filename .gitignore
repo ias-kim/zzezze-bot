@@ -1,0 +1,9 @@
+# 토큰이 들어가는 파일 - 절대 커밋 금지
+.env
+
+# 빌드 산출물
+/zzezze-bot
+*.exe
+
+# 로컬 데이터
+/data/points.json

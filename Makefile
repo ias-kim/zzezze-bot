@@ -1,7 +1,15 @@
 # 게이트 1(기계 검사). 로컬과 CI 가 같은 명령을 쓴다: make check
-.PHONY: check fmt vet build test layers cross run
+.PHONY: check fmt vet build test layers agents tidy cross run
 
-check: fmt vet build test layers cross
+check: fmt tidy vet build test layers agents cross
+
+# go.mod/go.sum 이 정리된 상태인지 (안 쓰는 의존성 흔적이 남으면 실패)
+tidy:
+	go mod tidy -diff
+
+# .claude/agents 와 .codex/agents 지시문이 같은지
+agents:
+	bash scripts/check-agents-sync.sh
 
 fmt:
 	@out="$$(gofmt -l .)"; \

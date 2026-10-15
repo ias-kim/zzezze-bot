@@ -20,5 +20,5 @@
 ## 결과
 
 - 시간 집계 코드를 직접 쓰지 않아도 된다.
-- Poll의 `Duration` 단위는 시간(hour)이다. 결과를 봇이 다시 읽을 필요는 없다.
+- Poll의 `Duration` 단위는 시간(hour)이다. discordgo 소스에는 단위 표기가 없고, 근거는 Discord API 문서의 Poll Create Request `duration` 필드다(https://discord.com/developers/docs/resources/poll). 6단계 구현 때 실제 게시로 한 번 확인한다. 결과를 봇이 다시 읽을 필요는 없다.
 - 1차 배포는 Go 1.23 그대로 가능하다.

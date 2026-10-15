@@ -20,9 +20,23 @@ func TestEveryKeyHasBothTones(t *testing.T) {
 	}
 }
 
-func TestAllKeysMatchesTable(t *testing.T) {
-	if len(AllKeys()) != len(lines) {
-		t.Errorf("AllKeys()=%d but lines table has %d keys", len(AllKeys()), len(lines))
+// 상수 목록(keys)과 대사 표(lines)가 정확히 같은 집합인지 확인한다.
+// 상수만 선언하고 표에 대사를 안 넣은 키, 표에만 있고 목록에 없는 키를 둘 다 잡는다.
+func TestKeyListMatchesTable(t *testing.T) {
+	seen := map[Key]bool{}
+	for _, k := range keys {
+		if seen[k] {
+			t.Errorf("key %q listed twice", k)
+		}
+		seen[k] = true
+		if _, ok := lines[k]; !ok {
+			t.Errorf("key %q is declared but has no lines", k)
+		}
+	}
+	for k := range lines {
+		if !seen[k] {
+			t.Errorf("lines has %q but it is missing from keys list", k)
+		}
 	}
 }
 

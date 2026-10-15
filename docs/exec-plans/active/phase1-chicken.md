@@ -10,9 +10,9 @@
 
 ## 완료 기준
 
-- [ ] `make check`가 통과한다 (gofmt, vet, build, `test -race`, 계층 검사, arm64 크로스 빌드)
-- [ ] 순수 패키지(`config`, `interactions`, `voice`, `session`, `yacht`)가 discordgo를 import하지 않는다 (계층 검사로 강제)
-- [ ] 트리거 테스트 데이터(`testdata/triggers_hit.txt`, `triggers_miss.txt`)가 실제 2번방 문장으로 채워져 있고 테이블 테스트로 고정돼 있다
+- [ ] `make check`가 통과한다 (검사 항목은 Makefile `check` 타깃이 원천)
+- [ ] `main.go`와 `features/` 밖의 패키지가 discordgo를 import하지 않는다 (`make layers`로 강제, 테스트 파일 포함)
+- [ ] nudge 트리거 테스트 데이터(`features/testdata/nudge_hit.txt`, `nudge_miss.txt`)가 실제 2번방 문장으로 채워져 있고 테이블 테스트로 고정돼 있다
 - [ ] 1번방에서는 nudge가 반응하지 않고, 자동 반응은 mild 톤으로만 나온다
 - [ ] 치킨 판: 참가자가 2명 미만이면 취소되고, 동점은 최대 3라운드 재굴림한 뒤 무작위로 정한다
 - [ ] 시간 투표: 18~23시 중 지나지 않은 정각으로 기본 투표(복수 선택)가 올라가고, 모두 지났으면 내일 시간대로 올라간다 (KST 22:30과 23:30 경계를 테스트)
@@ -29,9 +29,10 @@
 | 1 | `config` 타입화(`Feature`, `Tone`, `Enabled`), `interactions` custom_id codec | ✅ 테스트 통과 |
 | 2 | `voice/lines.go` 대사집 + 주사위 눈 | ✅ 테스트 통과 (대사는 초안, 사용자가 다듬을 예정) |
 | H | 하네스 보강 (설계를 레포로, `make check`, 계층 검사, CI `-race`, ADR) | ✅ 계층 검사가 위반을 잡는지 일부러 어겨서 확인함 |
+| H2 | reviewer 감사 23건 반영: README 재작성, 계층 검사 강화(테스트 import, 새 패키지 자동 포함), `tidy`/`agents` 검사 추가, voice 키 목록 테스트, main.go `config.Lookup` 사용, profile 모순 해소(ADR 0005), handoff 도입 | ✅ 2026-10-15 |
 | 3 | `session/registry.go` (`Touch`, `Finish` 1회 보장, `CloseAll`, 유저 역인덱스, `-race` 테스트) | ⏳ 다음 |
-| 4 | `features/autoreply.go` + 트리거 테스트 데이터 | ⬜ (사용자 과제: 2번방 문장 수집 필요) |
-| 5 | `yacht/chicken.go` 순수 로직 + `features/nudge.go` 치킨 흐름 | ⬜ |
+| 4 | `features/autoreply.go` (밈 반응, 방별 쿨다운, 테스트 안의 표) | ⬜ |
+| 5 | `yacht/chicken.go` 순수 로직 + `features/nudge.go` 치킨 흐름 + `features/testdata/nudge_*.txt` | ⬜ (사용자 과제: 2번방 문장 수집 필요) |
 | 6 | 시간 투표 (기본 투표 게시, KST 경계) | ⬜ |
 | 7 | `main.go` 연결, 순서 있는 종료, 배포 스크립트, 1차 배포 | ⬜ |
 
@@ -41,3 +42,5 @@
 - 2026-09-23: 시간 고르기는 직접 만들지 않고 디스코드 기본 투표를 쓴다. 이를 위해 discordgo v0.29로 올림 ([ADR 0002](../../adr/0002-discordgo-v029-poll.md))
 - 2026-09-23: 규칙은 순수 패키지에 두고, 판 상태는 공용 session.Registry로 관리한다 ([ADR 0003](../../adr/0003-pure-core-shared-session.md))
 - 2026-09-28: 1·2단계를 exec-plan 없이 먼저 시작한 것을 발견함 (AGENTS.md 작업 시작 규칙 위반). 이 문서를 소급해서 작성함
+- 2026-10-15: 배포 대상을 t4g.nano로 확정 (월 약 $8). Codex 무료 플랜이라 검증은 Claude 서브에이전트가 맡고, 서브에이전트에는 가벼운 모델을 지정함 (profile.md)
+- 2026-10-15: 하루 마무리 때 `docs/handoff.md`를 갱신하고 push 함 (AGENTS.md 작업 규칙)

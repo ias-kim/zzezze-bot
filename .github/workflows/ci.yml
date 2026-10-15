@@ -15,6 +15,6 @@ jobs:
         with:
           go-version-file: go.mod # Go 버전의 원천은 go.mod 하나
 
-      # gofmt, vet, build, test -race, 계층 검사, arm64 크로스 빌드 (Makefile 참고)
+      # 검사 항목은 Makefile 의 check 타깃이 원천 (여기에 목록을 복사하지 않는다)
       - name: make check
         run: make check

@@ -1,4 +1,6 @@
-// Package interactions 는 버튼/커맨드 상호작용의 custom_id 형식과 라우팅을 담당한다.
+// Package interactions 는 버튼 custom_id 형식("기능:동작[:인자]")을 담당한다.
+// 버튼 → 핸들러 라우팅은 discordgo 가 필요하므로 features/ 쪽에 둔다.
+// Feature 필드는 string 이다. config.Feature 와 이름 공간이 다를 수 있어 일부러 묶지 않았다.
 package interactions
 
 import (

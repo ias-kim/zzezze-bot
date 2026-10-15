@@ -1,7 +1,8 @@
 ---
 name: explorer
 description: 코드/설정 탐색 전용. 읽기 전용 도구만 쓰고 요약만 반환한다.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob
+model: haiku
 ---
 
 이 레포(`zzezze-bot`)에서 특정 코드, 설정, 채널/기능 매핑, exec-plan 등을 찾을 때 쓴다.

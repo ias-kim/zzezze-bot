@@ -74,13 +74,13 @@ main.go ──▶ features/ ──▶ yacht/ session/ voice/ config/ interaction
 - **치킨**: "치킨"과 의도 표현(`시킬|시켜|먹을|ㄱ|뭐먹|?`)이 **함께** 나올 때만 반응한다 → `[🎲 야추로 정하기] [🔕 오늘 그만]`
   - 60초 동안 참가자를 받는다. 2명 미만이면 취소한다(`voice.ChickenCancel`).
   - 참가자마다 주사위 5개를 한 번 굴려 합계로 겨루고, **최저점이 당첨**이다.
-  - 동점이면 동점자끼리 최대 3라운드까지 다시 굴린다. 그래도 같으면 `Roller`로 한 명을 고른다. 결과는 메시지를 한 번만 수정해서 보여준다.
+  - 동점이면 동점자끼리 최대 3라운드까지 다시 굴린다. 그래도 같으면 주입받은 무작위 함수로 한 명을 고른다(테스트에서는 고정값). 결과는 메시지를 한 번만 수정해서 보여준다.
   - 포인트는 움직이지 않는다. 2차부터 `matches(kind='chicken')`에 기록한다.
 - **시간**: `몇\s*시|언제\s*(봄|볼|만나)` 같은 말 → `[⏰ 시간 투표]`
   - 봇이 디스코드 **기본 투표**를 복수 선택으로 올린다. 선택지는 오늘 18~23시 중 아직 지나지 않은 정각이다. 모두 지났으면 내일 18~23시를 쓴다. 3시간 뒤 마감한다.
-- **밈**: "쮀쮀" 계열에만 반응한다. "줘줘", "졸졸"은 평범한 말에 오작동하므로 제외한다.
+- **밈** (`features/autoreply.go`, 두 방 모두): "쮀쮀" 계열에만 반응한다. "줘줘", "졸졸"은 평범한 말에 오작동하므로 제외한다. 패턴이 단순해서 테스트 안의 표로 충분하다.
 - **소음 제어**: 트리거별·채널별 쿨다운은 30분이다. `[🔕 오늘 그만]`을 누르면 KST 자정까지 해당 트리거를 멈춘다. 봇 메시지와 명령어 메시지에는 반응하지 않는다.
-- **트리거 테스트 데이터**: 실제 2번방 문장으로 `testdata/triggers_hit.txt`, `testdata/triggers_miss.txt`를 만들고 테이블 테스트로 고정한다.
+- **트리거 테스트 데이터** (nudge 전용): 실제 2번방 문장으로 `features/testdata/nudge_hit.txt`, `nudge_miss.txt`를 만들고 테이블 테스트로 고정한다.
 
 ## 야추 (2차)
 
@@ -139,7 +139,7 @@ main.go ──▶ features/ ──▶ yacht/ session/ voice/ config/ interaction
 
 ## 배포
 
-- `GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build`로 빌드하고, EC2(t4g)에서 systemd로 띄운다.
+- `GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build`로 빌드하고, **EC2 t4g.nano**(서울)에서 systemd로 띄운다. Go 봇은 메모리를 수십 MB만 써서 nano(512MB)로 충분하다. 비용은 `docs/harness/profile.md` 참고.
 - 배포는 원자적으로 한다. `zzezze-bot.new`로 업로드한 뒤 `mv`로 바꿔치기하고 `systemctl restart`한다.
 - (2차) DB는 매일 `sqlite3 .backup`으로 백업하고, 백업본은 **EC2 밖**(로컬 Mac 또는 S3)에 보관한다.
 

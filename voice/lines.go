@@ -8,6 +8,7 @@
 package voice
 
 import (
+	"slices"
 	"strings"
 
 	"zzezze-bot/config"
@@ -37,6 +38,15 @@ const (
 	MuteBtnLabel    Key = "nudge.btn.mute"   // [🔕 오늘 그만] 버튼 라벨
 	JoinBtnLabel    Key = "chicken.btn.join" // [🙋 참가] 버튼 라벨
 )
+
+// keys 는 선언된 모든 대사 키 목록이다. 새 키를 만들면 여기에도 추가한다.
+// 테스트(TestKeyListMatchesTable)가 이 목록과 lines 표가 같은 집합인지 확인한다.
+var keys = []Key{
+	MemeReply, NudgeChicken, NudgeTime, NudgeMuted,
+	ChickenOpen, ChickenJoined, ChickenCancel, ChickenTie, ChickenLoser,
+	TimePollTitle, SessionExpired, SessionRestart, NotYourButton, WrongChannel, AlreadyInGame,
+	ChickenBtnLabel, TimeBtnLabel, MuteBtnLabel, JoinBtnLabel,
+}
 
 type toneLines map[config.Tone][]string
 
@@ -119,13 +129,9 @@ var lines = map[Key]toneLines{
 	},
 }
 
-// AllKeys 는 등록된 모든 대사 키를 반환한다 (테스트와 점검용).
+// AllKeys 는 선언된 모든 대사 키를 반환한다 (테스트와 점검용).
 func AllKeys() []Key {
-	keys := make([]Key, 0, len(lines))
-	for k := range lines {
-		keys = append(keys, k)
-	}
-	return keys
+	return slices.Clone(keys)
 }
 
 // Picker 는 변형 n개 중 하나의 인덱스를 고른다. 운영에서는 rand.IntN, 테스트에서는 고정값.

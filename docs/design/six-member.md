@@ -64,7 +64,8 @@ main.go ──▶ features/ ──▶ yacht/ session/ voice/ config/ interaction
 ## session.Registry
 
 - 메시지 ID를 키로 판 상태를 보관하고, 판마다 락을 따로 둔다.
-- `Touch(d)`는 타이머를 재설정한다. 방치 시간은 **마지막 행동부터** 센다.
+- `Touch(msgID)`는 타이머를 재설정한다. 방치 시간(`Game.Idle`)은 `Start`할 때 정하고, **마지막 행동부터** 센다.
+- 판 상태는 `Do(msgID, fn)` 안에서만 만진다. fn 안에서는 디스코드 호출 같은 I/O를 하지 않는다.
 - `Finish()`는 처음 호출됐을 때만 true를 돌려주고, 판과 유저 역인덱스를 함께 지운다. 그래서 타이머 만료와 클릭이 동시에 들어와도 한 번만 끝난다.
 - `userID → msgID` 역인덱스를 둔다. 한 유저는 수락 대기 중인 판까지 포함해 **동시에 판 1개**만 가질 수 있다.
 - `CloseAll()`은 종료할 때 모든 타이머를 멈추고 남은 판 목록을 돌려준다.

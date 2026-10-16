@@ -26,3 +26,6 @@ coverage.*
 .claude/settings.local.json
 # 개인 메모용 마크다운. 하네스 문서(AGENTS.md, docs/)는 올린다.
 *.local.md
+# Obsidian 학습 노트 (개인용)
+.obsidian/
+/StudyVault/

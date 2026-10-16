@@ -30,11 +30,26 @@
 | 2 | `voice/lines.go` 대사집 + 주사위 눈 | ✅ 테스트 통과 (대사는 초안, 사용자가 다듬을 예정) |
 | H | 하네스 보강 (설계를 레포로, `make check`, 계층 검사, CI `-race`, ADR) | ✅ 계층 검사가 위반을 잡는지 일부러 어겨서 확인함 |
 | H2 | reviewer 감사 23건 반영: README 재작성, 계층 검사 강화(테스트 import, 새 패키지 자동 포함), `tidy`/`agents` 검사 추가, voice 키 목록 테스트, main.go `config.Lookup` 사용, profile 모순 해소(ADR 0005), handoff 도입 | ✅ 2026-10-15 |
-| 3 | `session/registry.go` (`Touch`, `Finish` 1회 보장, `CloseAll`, 유저 역인덱스, `-race` 테스트) | ⏳ 다음 |
-| 4 | `features/autoreply.go` (밈 반응, 방별 쿨다운, 테스트 안의 표) | ⬜ |
+| 3 | `session/registry.go` (`Touch`, `Finish` 1회 보장, `CloseAll`, 유저 역인덱스, `-race` 테스트) | ✅ 2026-10-16 (아래 3단계 완료 기준 참고) |
+| 4 | `features/autoreply.go` (밈 반응, 방별 쿨다운, 테스트 안의 표) | ⏳ 다음 |
 | 5 | `yacht/chicken.go` 순수 로직 + `features/nudge.go` 치킨 흐름 + `features/testdata/nudge_*.txt` | ⬜ (사용자 과제: 2번방 문장 수집 필요) |
 | 6 | 시간 투표 (기본 투표 게시, KST 경계) | ⬜ |
 | 7 | `main.go` 연결, 순서 있는 종료, 배포 스크립트, 1차 배포 | ⬜ |
+
+## 3단계 완료 기준: `session.Registry`
+
+인스턴스는 **하나**다(ADR 0003 "Registry 하나로 공유"). 판 상태는 `any`로 담고 꺼내는 쪽(features)이 타입을 단언한다. 그래서 "한 유저 동시에 판 1개"는 기능을 가로질러 적용된다(치킨 판에 들어가 있으면 대결도 못 건다).
+
+`go test -race ./session/`로 아래를 증명한다. 타이머는 가짜를 주입하고 sleep에 기대지 않는다. CI가 go.mod의 Go 1.23을 쓰므로 `testing/synctest` 등 1.24 이후 API는 쓰지 않는다.
+
+- [x] `Start`는 원자적이다. 유저 중 한 명이라도 다른 판에 있으면 실패하고, 나머지 유저도 인덱스에 남지 않는다. 목록 안의 중복 유저, 이미 있는 msgID도 거절한다.
+- [x] `Join`: 다른 판에 있는 유저는 `ErrUserBusy`, 같은 판에 이미 있으면 `ErrAlreadyJoined`, 없는 판이면 `ErrNotFound`.
+- [x] `Finish`를 N개 고루틴이 동시에 불러도 true는 정확히 1번이다. 판과 그 판을 가리키는 역인덱스 항목만 지운다.
+- [x] 타이머 만료도 같은 종료 경로를 거친다. 만료와 `Finish`가 경합하면 "onExpire 호출"과 "`Finish` true" 중 정확히 하나만 일어난다.
+- [x] `Touch` 전에 걸린 타이머가 늦게 발화해도 판이 끝나지 않는다(세대 검사). 방치 시간은 마지막 `Touch`부터 센다.
+- [x] onExpire는 모든 락 밖에서 호출된다(콜백 안에서 Registry를 불러도 데드락이 없다).
+- [x] `CloseAll`은 남은 판(msgID, 상태)을 돌려주고, 이후 발화하는 타이머는 onExpire를 부르지 않으며, 이후 `Start`는 `ErrClosed`로 실패한다.
+- [x] `Do(msgID, fn)`는 판별 락 안에서 fn을 실행한다. fn 안에서 `Touch`/`Finish`를 불러도 데드락이 없다.
 
 ## 결정 로그
 
@@ -44,3 +59,5 @@
 - 2026-09-28: 1·2단계를 exec-plan 없이 먼저 시작한 것을 발견함 (AGENTS.md 작업 시작 규칙 위반). 이 문서를 소급해서 작성함
 - 2026-10-15: 배포 대상을 t4g.nano로 확정 (월 약 $8). Codex 무료 플랜이라 검증은 Claude 서브에이전트가 맡고, 서브에이전트에는 가벼운 모델을 지정함 (profile.md)
 - 2026-10-15: 하루 마무리 때 `docs/handoff.md`를 갱신하고 push 함 (AGENTS.md 작업 규칙)
+- 2026-10-16: `session.Registry`는 인스턴스 하나에 상태를 `any`로 담는다. 유저 배타성은 기능을 가로질러 적용된다 (ADR 0003 해석, 3단계 완료 기준)
+- 2026-10-16: 방치 시간은 `Start` 때 고정하고 `Touch(msgID)`는 인자로 시간을 받지 않는다. 대결(2차)에서 수락 대기와 본게임의 방치 시간이 달라야 하면 그때 추가한다

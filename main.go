@@ -10,6 +10,8 @@ import (
 	"github.com/joho/godotenv"
 
 	"zzezze-bot/config"
+	"zzezze-bot/features"
+	"zzezze-bot/quiet"
 )
 
 func main() {
@@ -35,6 +37,7 @@ func main() {
 
 	dg.AddHandler(onReady)
 	dg.AddHandler(onMessageCreate)
+	dg.AddHandler(features.NewAutoReply(quiet.New(features.MemeCooldown)).Handle)
 
 	if err := dg.Open(); err != nil {
 		log.Fatalf("게이트웨이 연결 실패: %v", err)
@@ -57,8 +60,8 @@ func onReady(_ *discordgo.Session, r *discordgo.Ready) {
 }
 
 // onMessageCreate 는 메시지가 올라올 때마다 호출된다.
-// 지금은 등록된 방의 메시지인지 인식해 로그만 남긴다. 기능 디스패치는
-// docs/exec-plans/active/phase1-chicken.md 4~7단계에서 features/ 로 옮긴다.
+// 등록된 방의 메시지를 로그로 남긴다. 기능은 features/ 핸들러가 따로 등록되어
+// 각자 config.Enabled 로 켜짐 여부를 확인한다.
 func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// 봇(자기 자신 포함)이 보낸 메시지는 무시한다.
 	if m.Author.Bot {
@@ -74,8 +77,6 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	log.Printf("[%s] %s: %q  (features=%v, tone=%s)",
 		cfg.Name, m.Author.Username, m.Content, cfg.Features, cfg.Tone)
 
-	// TODO(phase1 4~5단계): 켜진 기능만 디스패치한다. 확인은 config.Enabled 로만.
-	//   if config.Enabled(m.ChannelID, config.AutoReply) { features.HandleAutoReply(s, m) }
-	//   if config.Enabled(m.ChannelID, config.Nudge)     { features.HandleNudge(s, m) }
+	// TODO(phase1 5단계): nudge 핸들러도 위 AddHandler 옆에 등록한다.
 	_ = s
 }

@@ -1,9 +1,28 @@
-# 토큰이 들어가는 파일 - 절대 커밋 금지
+# ── 비밀값: 절대 커밋 금지 ─────────────────────────────
+# 봇 토큰이 들어가는 파일. 예시 파일(.env.example)만 올린다.
 .env
+.env.*
+!.env.example
 
-# 빌드 산출물
+# ── 빌드 산출물 ────────────────────────────────────────
 /zzezze-bot
+/zzezze-bot.new
+/dist/
 *.exe
+*.test
+*.out
+coverage.*
 
-# 로컬 데이터
-/data/points.json
+# ── 로컬 데이터 (2차: SQLite 포인트 원장) ─────────────
+# 원장 DB 와 WAL/SHM 파일, 백업본. 백업은 EC2 밖에 따로 보관한다.
+/data/
+
+# ── 개인 설정 (내 컴퓨터 전용) ─────────────────────────
+.DS_Store
+.idea/
+.vscode/
+*.swp
+# Claude Code 개인 권한/설정. 공용 서브에이전트(.claude/agents/)는 올린다.
+.claude/settings.local.json
+# 개인 메모용 마크다운. 하네스 문서(AGENTS.md, docs/)는 올린다.
+*.local.md

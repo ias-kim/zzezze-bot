@@ -57,7 +57,8 @@ func onReady(_ *discordgo.Session, r *discordgo.Ready) {
 }
 
 // onMessageCreate 는 메시지가 올라올 때마다 호출된다.
-// 1단계 목표: 설정에 등록된 방의 메시지인지 인식하고, 어떤 기능이 켜졌는지 로그로 확인한다.
+// 지금은 등록된 방의 메시지인지 인식해 로그만 남긴다. 기능 디스패치는
+// docs/exec-plans/active/phase1-chicken.md 4~7단계에서 features/ 로 옮긴다.
 func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// 봇(자기 자신 포함)이 보낸 메시지는 무시한다.
 	if m.Author.Bot {
@@ -65,17 +66,16 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	// 설정(config/channels.go)에 등록된 채널만 처리한다. 나머지는 무시.
-	cfg, ok := config.Channels[m.ChannelID]
+	cfg, ok := config.Lookup(m.ChannelID)
 	if !ok {
 		return
 	}
 
-	// 어느 방에서 누가 무엇을 보냈고, 그 방에 어떤 기능이 켜졌는지 확인.
-	log.Printf("[%s] %s: %q  (features=%v)",
-		cfg.Name, m.Author.Username, m.Content, cfg.Features)
+	log.Printf("[%s] %s: %q  (features=%v, tone=%s)",
+		cfg.Name, m.Author.Username, m.Content, cfg.Features, cfg.Tone)
 
-	// TODO(2단계~): cfg.Has("...") 로 켜진 기능만 디스패치한다.
-	//   if cfg.Has("autoReply") { features.HandleAutoReply(s, m) }
-	//   if cfg.Has("moderation") && isCommand(m.Content) { features.HandleModeration(s, m) }
+	// TODO(phase1 4~5단계): 켜진 기능만 디스패치한다. 확인은 config.Enabled 로만.
+	//   if config.Enabled(m.ChannelID, config.AutoReply) { features.HandleAutoReply(s, m) }
+	//   if config.Enabled(m.ChannelID, config.Nudge)     { features.HandleNudge(s, m) }
 	_ = s
 }

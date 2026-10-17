@@ -39,8 +39,8 @@
 | H | 하네스 보강 (설계를 레포로, `make check`, 계층 검사, CI `-race`, ADR) | ✅ 계층 검사가 위반을 잡는지 일부러 어겨서 확인함 |
 | H2 | reviewer 감사 23건 반영: README 재작성, 계층 검사 강화(테스트 import, 새 패키지 자동 포함), `tidy`/`agents` 검사 추가, voice 키 목록 테스트, main.go `config.Lookup` 사용, profile 모순 해소(ADR 0005), handoff 도입 | ✅ 2026-10-15 |
 | P | 방향 전환: 치킨 판 → 약속 카드 (ADR 0006), 트리거 판정에 AI 사용 (ADR 0007), 설계·계획 수정, 트리거 테스트 데이터 초안 | ✅ 2026-10-17 |
-| 3 | `session/registry.go` (`Touch`, `Finish` 1회 보장, `CloseAll`, 유저 역인덱스는 **판마다 선택**, `-race` 테스트) | ⏳ 다음 |
-| 4 | `features/autoreply.go` (밈 반응, 방별 쿨다운, 테스트 안의 표) | ⬜ |
+| 3 | `session/registry.go` (`Touch`, `Finish` 1회 보장, `CloseAll`, 유저 역인덱스는 **판마다 선택**, `-race` 테스트) | ✅ 2026-10-17. 세대 검사·1회 종료·Busy 검사를 일부러 지워서 테스트가 잡는지 확인함 |
+| 4 | `features/autoreply.go` (밈 반응, 방별 쿨다운, 테스트 안의 표) | ⏳ 다음 |
 | 5 | `meetup/` 순수 로직(1차 필터, 판정 인터페이스, 메시지 묶기, 날짜 해석, 카드 상태) + `features/` AI 판정 구현체(Haiku 5.5) + `make eval` + `voice` 키 교체(`Chicken*` → 약속 카드) + `features/nudge.go` | ⬜ (사용자 과제: `~맥` 문장 포함해 hit 문장을 더 모아야 함) |
 | 6 | 시간 투표 (카드 날짜 기준 기본 투표, KST 경계) | ⬜ |
 | 7 | `main.go` 연결, 순서 있는 종료, 배포 스크립트, 1차 배포 | ⬜ |

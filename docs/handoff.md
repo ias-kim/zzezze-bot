@@ -4,8 +4,9 @@
 > 새 세션은 이 파일 → `docs/exec-plans/active/` 순서로 읽고 시작한다.
 
 - 마지막 갱신: 2026-10-16 (작업일 2026-10-15)
-- 브랜치: `feat/phase1-chicken` (PR #1, main 미병합)
-- 진행 중 계획: [phase1-chicken.md](exec-plans/active/phase1-chicken.md)
+- 브랜치: `claude/stoic-brown-623ddx` (`feat/phase1-chicken`은 PR #1로 main에 병합됨)
+- 진행 중 계획: [phase1-meetup.md](exec-plans/active/phase1-meetup.md)
+- 2026-10-17 방향 전환: 1차 중심 기능을 치킨 판에서 **약속 카드**로 바꿨다([ADR 0006](adr/0006-meetup-first-rollout.md)). 아래 내용 중 치킨 판 관련 항목은 이 결정으로 대체된다.
 
 ## 오늘 한 것
 
@@ -28,9 +29,8 @@
 
 ## 막힌 것 / 사용자에게 필요한 것
 
-- **2번방 문장 수집 과제**: 치킨이나 시간 얘기가 나온 실제 문장을 원문 그대로 모아야 한다. 5단계(nudge)를 시작하기 전에 필요하다.
+- **2번방 문장 수집 과제**: 약속 얘기가 나온 실제 문장을 원문 그대로 더 모아야 한다(특히 `~맥` 문장). 초안은 `meetup/testdata/{hit,miss}.txt`에 있고, hit이 3줄뿐이다. 5단계를 시작하기 전에 필요하다.
 - **`voice/lines.go` 대사 다듬기**: 지금은 초안이다. 방 말투에 맞게 사용자가 고쳐야 한다.
-- PR #1 병합 여부는 사용자가 결정한다.
 - 작업 폴더의 `.obsidian/`, `StudyVault/`는 커밋하지 않은 상태다(사용자 개인 노트로 보임). 레포에 올릴지, `.gitignore`에 넣을지 사용자가 정해야 한다.
 
 ## 새로 내린 결정

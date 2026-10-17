@@ -58,7 +58,7 @@ func onReady(_ *discordgo.Session, r *discordgo.Ready) {
 
 // onMessageCreate 는 메시지가 올라올 때마다 호출된다.
 // 지금은 등록된 방의 메시지인지 인식해 로그만 남긴다. 기능 디스패치는
-// docs/exec-plans/active/phase1-chicken.md 4~7단계에서 features/ 로 옮긴다.
+// docs/exec-plans/active/phase1-meetup.md 4~7단계에서 features/ 로 옮긴다.
 func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// 봇(자기 자신 포함)이 보낸 메시지는 무시한다.
 	if m.Author.Bot {

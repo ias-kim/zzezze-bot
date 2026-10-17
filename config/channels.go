@@ -9,7 +9,7 @@ type Feature string
 const (
 	AutoReply Feature = "autoReply" // 쮀쮀이야 계열 밈 자동 반응
 	Yacht     Feature = "yacht"     // /야추, /포인트, /랭킹
-	Nudge     Feature = "nudge"     // 치킨/시간 대화 트리거 (2번방 전용)
+	Nudge     Feature = "nudge"     // 약속 대화 트리거 → 약속 카드 (2번방 전용)
 )
 
 // Tone 은 봇 대사의 말투 강도다.

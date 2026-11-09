@@ -19,14 +19,14 @@ type Key string
 
 const (
 	MemeReply       Key = "meme.reply"       // 쮀쮀이야 밈에 자동 반응
-	NudgeChicken    Key = "nudge.chicken"    // "치킨 시킬까?" → 야추로 정하기 제안
+	NudgeFood       Key = "nudge.food"       // "{food} 시킬까?" → 야추로 정하기 제안
 	NudgeTime       Key = "nudge.time"       // "몇시?" → 시간 투표 제안
 	NudgeMuted      Key = "nudge.muted"      // [오늘 그만] 눌렀을 때
-	ChickenOpen     Key = "chicken.open"     // 참가 모집 시작
+	ChickenOpen     Key = "chicken.open"     // 참가 모집 시작 {food}
 	ChickenJoined   Key = "chicken.joined"   // {user} 참가
 	ChickenCancel   Key = "chicken.cancel"   // 참가자 부족으로 취소
 	ChickenTie      Key = "chicken.tie"      // 동점 재굴림
-	ChickenLoser    Key = "chicken.loser"    // {user} 당첨 (치킨값 담당)
+	ChickenLoser    Key = "chicken.loser"    // {user} 당첨 ({food}값 담당)
 	TimePollTitle   Key = "time.poll.title"  // 시간 투표 질문
 	SessionExpired  Key = "session.expired"  // 만료된 버튼을 눌렀을 때
 	SessionRestart  Key = "session.restart"  // 봇 재시작으로 판 취소
@@ -43,16 +43,17 @@ const (
 	ChickenByLot    Key = "chicken.bylot"    // 재굴림 3번에도 동점 → 제비뽑기
 	TimeSlotToday   Key = "time.slot.today"  // 투표 선택지 {hour}
 	TimeSlotNextDay Key = "time.slot.next"   // 투표 선택지 (내일) {hour}
+	FoodGeneric     Key = "food.generic"     // 메뉴 없이 "뭐 시킬까"일 때 {food} 자리에 들어갈 말
 )
 
 // keys 는 선언된 모든 대사 키 목록이다. 새 키를 만들면 여기에도 추가한다.
 // 테스트(TestKeyListMatchesTable)가 이 목록과 lines 표가 같은 집합인지 확인한다.
 var keys = []Key{
-	MemeReply, NudgeChicken, NudgeTime, NudgeMuted,
+	MemeReply, NudgeFood, NudgeTime, NudgeMuted,
 	ChickenOpen, ChickenJoined, ChickenCancel, ChickenTie, ChickenLoser,
 	TimePollTitle, SessionExpired, SessionRestart, NotYourButton, WrongChannel, AlreadyInGame,
 	ChickenBtnLabel, TimeBtnLabel, MuteBtnLabel, JoinBtnLabel,
-	ChickenPlayers, ChickenRound, ChickenRow, ChickenByLot, TimeSlotToday, TimeSlotNextDay,
+	ChickenPlayers, ChickenRound, ChickenRow, ChickenByLot, TimeSlotToday, TimeSlotNextDay, FoodGeneric,
 }
 
 type toneLines map[config.Tone][]string
@@ -62,9 +63,9 @@ var lines = map[Key]toneLines{
 		config.ToneFull: {"쮀쮀이야 티~원~ 🙌", "아.. 예?.. 쮀쮀이야~", "쮀쮀쮀쮀 쮀쮀이야!!", "줴~랄~ 쮀쮀이야 ㅋㅋ"},
 		config.ToneMild: {"쮀쮀이야! 🙌", "쮀쮀이야~"},
 	},
-	NudgeChicken: {
-		config.ToneFull: {"아.. 예?.. 치킨이요? 줴~랄~ 누가 쏠지 야추로 정하시죠 🎲", "치킨 얘기 나왔다 쮀쮀이야~ 꼴찌가 쏘는 걸로 ㅋㅋ"},
-		config.ToneMild: {"치킨 누가 살지 주사위로 정해볼까요? 🎲"},
+	NudgeFood: {
+		config.ToneFull: {"아.. 예?.. {food}? 줴~랄~ 누가 쏠지 야추로 정하시죠 🎲", "{food} 얘기 나왔다 쮀쮀이야~ 꼴찌가 쏘는 걸로 ㅋㅋ"},
+		config.ToneMild: {"{food} 누가 살지 주사위로 정해볼까요? 🎲"},
 	},
 	NudgeTime: {
 		config.ToneFull: {"아.. 예?.. 몇시냐고요? 투표로 정하시죠 줴~랄~ ⏰", "또 시간 못 정하고 있네 ㅋㅋ 투표 ㄱㄱ ⏰"},
@@ -75,8 +76,8 @@ var lines = map[Key]toneLines{
 		config.ToneMild: {"오늘은 조용히 있을게요 🤐"},
 	},
 	ChickenOpen: {
-		config.ToneFull: {"🍗 치킨값 걸린 한 판! 60초 안에 [참가] 누르세요. 꼴찌가 쏩니다 줴~랄~", "🍗 쫄리면 뒤지시든가~ 60초 안에 참가 ㄱㄱ"},
-		config.ToneMild: {"🍗 주사위 한 판! 60초 안에 [참가]를 눌러주세요. 최저점이 당첨!"},
+		config.ToneFull: {"🍽️ {food}값 걸린 한 판! 60초 안에 [참가] 누르세요. 꼴찌가 쏩니다 줴~랄~", "🍽️ {food}값 쫄리면 뒤지시든가~ 60초 안에 참가 ㄱㄱ"},
+		config.ToneMild: {"🍽️ {food}값 주사위 한 판! 60초 안에 [참가]를 눌러주세요. 최저점이 당첨!"},
 	},
 	ChickenJoined: {
 		config.ToneFull: {"{user} 참가 ㅋㅋ 쮀쮀이야~", "{user} 들어왔다 아.. 예?.."},
@@ -91,8 +92,8 @@ var lines = map[Key]toneLines{
 		config.ToneMild: {"동점! 한 번 더 굴립니다 🎲"},
 	},
 	ChickenLoser: {
-		config.ToneFull: {"🍗 오늘의 치킨 스폰서: {user} ㅋㅋㅋ 쮀쮀이야 티~원~", "아.. 예?.. {user} 님이 쏘신답니다 줴~랄~ 🍗"},
-		config.ToneMild: {"🍗 당첨: {user}! 잘 먹겠습니다 ㅎㅎ"},
+		config.ToneFull: {"🍽️ 오늘의 {food} 스폰서: {user} ㅋㅋㅋ 쮀쮀이야 티~원~", "아.. 예?.. {user} 님이 {food} 쏘신답니다 줴~랄~ 🍽️"},
+		config.ToneMild: {"🍽️ {food} 당첨: {user}! 잘 먹겠습니다 ㅎㅎ"},
 	},
 	TimePollTitle: {
 		config.ToneFull: {"몇시에 봄? 되는 시간 다 찍어라 (복수 선택)", "아.. 예?.. 몇시요? 가능한 시간 다 고르세요"},
@@ -157,6 +158,10 @@ var lines = map[Key]toneLines{
 	TimeSlotNextDay: {
 		config.ToneFull: {"내일 {hour}시"},
 		config.ToneMild: {"내일 {hour}시"},
+	},
+	FoodGeneric: {
+		config.ToneFull: {"배달"},
+		config.ToneMild: {"배달"},
 	},
 }
 

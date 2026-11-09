@@ -32,20 +32,25 @@ func TestNudgeHit(t *testing.T) {
 		t.Fatal("nudge_hit.txt 가 비어 있음")
 	}
 	for _, line := range lines {
-		want, text, ok := strings.Cut(line, "\t")
-		if !ok {
-			t.Fatalf("형식 오류(탭 없음): %q", line)
+		parts := strings.Split(line, "\t")
+		if len(parts) != 3 {
+			t.Fatalf("형식 오류(탭 2개 필요): %q", line)
 		}
-		if got := DetectNudge(text); string(got) != want {
-			t.Errorf("DetectNudge(%q) = %q, want %q", text, got, want)
+		wantKind, wantFood, text := parts[0], parts[1], parts[2]
+		if wantFood == "-" {
+			wantFood = ""
+		}
+		kind, food := DetectNudge(text)
+		if string(kind) != wantKind || food != wantFood {
+			t.Errorf("DetectNudge(%q) = (%q, %q), want (%q, %q)", text, kind, food, wantKind, wantFood)
 		}
 	}
 }
 
 func TestNudgeMiss(t *testing.T) {
 	for _, text := range readLines(t, "testdata/nudge_miss.txt") {
-		if got := DetectNudge(text); got != NoNudge {
-			t.Errorf("DetectNudge(%q) = %q, want none", text, got)
+		if kind, _ := DetectNudge(text); kind != NoNudge {
+			t.Errorf("DetectNudge(%q) = %q, want none", text, kind)
 		}
 	}
 }
@@ -58,6 +63,11 @@ func TestIsMeme(t *testing.T) {
 		{"쮀쮀이야", true},
 		{"아 쮀쮀", true},
 		{"쮀 쮀 이야", true},
+		{"줴줴이야~", true},
+		{"조줴줴이야~", true},
+		{"최재희야~~", true},
+		{"최 재희야", true},
+		{"줴~랄~", false},
 		{"줘줘", false},
 		{"졸졸 따라와", false},
 		{"쮀", false},

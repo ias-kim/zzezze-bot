@@ -20,7 +20,7 @@ import (
 const (
 	nudgeCooldown = 30 * time.Minute // 대화 트리거: 트리거별·채널별
 	memeCooldown  = 3 * time.Minute  // 밈 자동 반응: 채널별
-	chickenJoin   = 60 * time.Second // 치킨 판 참가 모집 시간
+	chickenJoin   = 60 * time.Second // 음식값 판 참가 모집 시간
 )
 
 // custom_id: "nudge:<동작>[:인자]" (interactions 패키지 형식)
@@ -67,9 +67,9 @@ func (b *Bot) OnMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	now := b.Now()
 
 	if cfg.Has(config.Nudge) {
-		if kind := DetectNudge(m.Content); kind != NoNudge {
+		if kind, food := DetectNudge(m.Content); kind != NoNudge {
 			if b.Nudges.Allow(string(kind), m.ChannelID, now) {
-				b.sendNudge(s, m.ChannelID, kind, cfg.Tone)
+				b.sendNudge(s, m.ChannelID, kind, food, cfg.Tone)
 			}
 			return // 트리거에 걸린 말에는 밈 반응을 겹쳐 하지 않는다
 		}
@@ -81,14 +81,15 @@ func (b *Bot) OnMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func (b *Bot) sendNudge(s *discordgo.Session, channelID string, kind NudgeKind, tone config.Tone) {
+func (b *Bot) sendNudge(s *discordgo.Session, channelID string, kind NudgeKind, food string, tone config.Tone) {
 	var msg *discordgo.MessageSend
 	switch kind {
-	case NudgeChicken:
+	case NudgeFood:
 		msg = &discordgo.MessageSend{
-			Content: voice.Say(voice.NudgeChicken, tone, b.Pick),
+			Content: NudgeText(food, tone, b.Pick),
 			Components: row(
-				button(discordgo.PrimaryButton, "🎲", voice.Say(voice.ChickenBtnLabel, tone, b.Pick), actChicken, ""),
+				// 음식 이름은 버튼 custom_id 인자로 실어 보낸다 (판을 열 때 꺼내 쓴다).
+				button(discordgo.PrimaryButton, "🎲", voice.Say(voice.ChickenBtnLabel, tone, b.Pick), actChicken, food),
 				button(discordgo.SecondaryButton, "🔕", voice.Say(voice.MuteBtnLabel, tone, b.Pick), actMute, string(kind)),
 			),
 		}
@@ -129,7 +130,7 @@ func (b *Bot) OnInteraction(s *discordgo.Session, i *discordgo.InteractionCreate
 
 	switch id.Action {
 	case actChicken:
-		b.openChicken(s, i, user, cfg.Tone)
+		b.openChicken(s, i, user, id.Arg, cfg.Tone)
 	case actJoin:
 		b.joinChicken(s, i, user, cfg.Tone)
 	case actPoll:
@@ -140,9 +141,10 @@ func (b *Bot) OnInteraction(s *discordgo.Session, i *discordgo.InteractionCreate
 	}
 }
 
-func (b *Bot) openChicken(s *discordgo.Session, i *discordgo.InteractionCreate, user string, tone config.Tone) {
+// openChicken 은 참가 모집을 시작한다. 판 상태(Game.State)에는 걸린 음식 이름(string)을 둔다.
+func (b *Bot) openChicken(s *discordgo.Session, i *discordgo.InteractionCreate, user, food string, tone config.Tone) {
 	msgID, channelID := i.Message.ID, i.ChannelID
-	_, err := b.Reg.Start(msgID, channelID, []string{user}, nil, chickenJoin, func(g *session.Game) {
+	_, err := b.Reg.Start(msgID, channelID, []string{user}, food, chickenJoin, func(g *session.Game) {
 		b.resolveChicken(s, g, tone)
 	})
 	switch {
@@ -157,7 +159,13 @@ func (b *Bot) openChicken(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		b.ephemeral(s, i, voice.Say(voice.SessionExpired, tone, b.Pick))
 		return
 	}
-	b.update(s, i, RenderLobby(b.Reg.Users(msgID), tone, b.Pick), b.joinRow(tone))
+	b.update(s, i, RenderLobby(food, b.Reg.Users(msgID), tone, b.Pick), b.joinRow(tone))
+}
+
+// gameFood 는 판에 걸린 음식 이름이다. State 는 Start 때 한 번 정해지고 바뀌지 않는다.
+func gameFood(g *session.Game) string {
+	food, _ := g.State.(string)
+	return food
 }
 
 func (b *Bot) joinChicken(s *discordgo.Session, i *discordgo.InteractionCreate, user string, tone config.Tone) {
@@ -173,7 +181,11 @@ func (b *Bot) joinChicken(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		log.Printf("치킨 판 참가 실패: %v", err)
 		b.ack(s, i)
 	default:
-		b.update(s, i, RenderLobby(b.Reg.Users(msgID), tone, b.Pick), b.joinRow(tone))
+		food := ""
+		if g, ok := b.Reg.Get(msgID); ok {
+			food = gameFood(g)
+		}
+		b.update(s, i, RenderLobby(food, b.Reg.Users(msgID), tone, b.Pick), b.joinRow(tone))
 	}
 }
 
@@ -181,7 +193,7 @@ func (b *Bot) joinChicken(s *discordgo.Session, i *discordgo.InteractionCreate, 
 func (b *Bot) resolveChicken(s *discordgo.Session, g *session.Game, tone config.Tone) {
 	content := voice.Say(voice.ChickenCancel, tone, b.Pick)
 	if res, err := yacht.Chicken(g.Players, b.Roll, yacht.Pick(b.Pick)); err == nil {
-		content = RenderChicken(res, tone, b.Pick)
+		content = RenderChicken(gameFood(g), res, tone, b.Pick)
 	}
 	b.edit(s, g.ChannelID, g.MessageID, content)
 }

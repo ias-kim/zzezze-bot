@@ -1,0 +1,28 @@
+# systemd 유닛. 설치: docs/deploy.md
+[Unit]
+Description=zzezze-bot (BM 증바람 디스코드 봇)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=zzezze
+Group=zzezze
+WorkingDirectory=/opt/zzezze-bot
+EnvironmentFile=/opt/zzezze-bot/.env
+ExecStart=/opt/zzezze-bot/zzezze-bot
+# SIGTERM 을 받으면 진행 중인 판을 정리하고(최대 5초) 종료한다.
+KillSignal=SIGTERM
+TimeoutStopSec=15
+Restart=on-failure
+RestartSec=5
+
+# 최소 권한
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/zzezze-bot
+
+[Install]
+WantedBy=multi-user.target

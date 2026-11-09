@@ -3,8 +3,8 @@
 // 로직 코드에는 한국어 문자열을 직접 쓰지 않고 Say(키, 톤, ...) 로만 가져온다.
 // 새 밈이 생기면 이 파일의 lines 표만 고치면 된다.
 //
-//	full: 원정 멤버 전용 방(2번방). 방 밈 말투 풀파워.
-//	mild: 비핵심 인원이 있는 방(1번방). 가벼운 밈만.
+//	full: 기본 말투. 방 밈 말투 풀파워.
+//	mild: 가벼운 밈만. 지금은 config.Overrides 로 지정한 방에서만 쓴다 (ADR 0006).
 package voice
 
 import (
@@ -37,6 +37,12 @@ const (
 	TimeBtnLabel    Key = "time.btn.poll"    // [⏰ 시간 투표] 버튼 라벨
 	MuteBtnLabel    Key = "nudge.btn.mute"   // [🔕 오늘 그만] 버튼 라벨
 	JoinBtnLabel    Key = "chicken.btn.join" // [🙋 참가] 버튼 라벨
+	ChickenPlayers  Key = "chicken.players"  // 참가자 목록 {n} {users}
+	ChickenRound    Key = "chicken.round"    // 결과의 라운드 제목 {n}
+	ChickenRow      Key = "chicken.row"      // 결과 한 줄 {user} {dice} {sum}
+	ChickenByLot    Key = "chicken.bylot"    // 재굴림 3번에도 동점 → 제비뽑기
+	TimeSlotToday   Key = "time.slot.today"  // 투표 선택지 {hour}
+	TimeSlotNextDay Key = "time.slot.next"   // 투표 선택지 (내일) {hour}
 )
 
 // keys 는 선언된 모든 대사 키 목록이다. 새 키를 만들면 여기에도 추가한다.
@@ -46,6 +52,7 @@ var keys = []Key{
 	ChickenOpen, ChickenJoined, ChickenCancel, ChickenTie, ChickenLoser,
 	TimePollTitle, SessionExpired, SessionRestart, NotYourButton, WrongChannel, AlreadyInGame,
 	ChickenBtnLabel, TimeBtnLabel, MuteBtnLabel, JoinBtnLabel,
+	ChickenPlayers, ChickenRound, ChickenRow, ChickenByLot, TimeSlotToday, TimeSlotNextDay,
 }
 
 type toneLines map[config.Tone][]string
@@ -126,6 +133,30 @@ var lines = map[Key]toneLines{
 	JoinBtnLabel: {
 		config.ToneFull: {"참가"},
 		config.ToneMild: {"참가"},
+	},
+	ChickenPlayers: {
+		config.ToneFull: {"참가자 {n}명: {users}"},
+		config.ToneMild: {"참가자 {n}명: {users}"},
+	},
+	ChickenRound: {
+		config.ToneFull: {"**{n}라운드**"},
+		config.ToneMild: {"**{n}라운드**"},
+	},
+	ChickenRow: {
+		config.ToneFull: {"{user}  {dice}  → {sum}점"},
+		config.ToneMild: {"{user}  {dice}  → {sum}점"},
+	},
+	ChickenByLot: {
+		config.ToneFull: {"세 번 더 굴려도 동점 ㅋㅋ 제비뽑기로 갑니다 줴~랄~"},
+		config.ToneMild: {"끝까지 동점이라 제비뽑기로 정했어요."},
+	},
+	TimeSlotToday: {
+		config.ToneFull: {"{hour}시"},
+		config.ToneMild: {"{hour}시"},
+	},
+	TimeSlotNextDay: {
+		config.ToneFull: {"내일 {hour}시"},
+		config.ToneMild: {"내일 {hour}시"},
 	},
 }
 

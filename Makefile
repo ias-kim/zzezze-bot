@@ -1,5 +1,5 @@
 # 게이트 1(기계 검사). 로컬과 CI 가 같은 명령을 쓴다: make check
-.PHONY: check fmt vet build test layers agents tidy cross run
+.PHONY: check fmt vet build test layers agents tidy cross dist run
 
 check: fmt tidy vet build test layers agents cross
 
@@ -31,6 +31,10 @@ layers:
 # EC2(t4g, arm64) 배포 대상 크로스 빌드가 깨지지 않았는지 확인.
 cross:
 	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o /dev/null .
+
+# 배포용 바이너리 (EC2 t4g, arm64). 배포 절차는 docs/deploy.md
+dist:
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o dist/zzezze-bot .
 
 run:
 	go run .

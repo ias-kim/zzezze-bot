@@ -1,4 +1,4 @@
-// Package session 은 버튼 달린 판(치킨 판, 2차의 야추 대결)의 메모리 상태를 관리한다.
+// Package session 은 버튼 달린 판(빠른 야추 판, 2차의 야추 대결)의 메모리 상태를 관리한다.
 //
 //   - 메시지 ID 를 키로 판을 보관한다.
 //   - 방치 타이머는 마지막 행동부터 센다(Touch).
@@ -109,6 +109,14 @@ func (r *Registry) Join(msgID, userID string) error {
 	g.users = append(g.users, userID)
 	r.byUser[userID] = msgID
 	return nil
+}
+
+// Busy 는 유저가 이미 진행 중인 판에 들어가 있는지 본다.
+func (r *Registry) Busy(userID string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	_, ok := r.byUser[userID]
+	return ok
 }
 
 // Users 는 판에 들어온 유저를 들어온 순서대로 돌려준다(복사본).

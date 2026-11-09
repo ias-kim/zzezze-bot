@@ -41,7 +41,7 @@ func TestKeyListMatchesTable(t *testing.T) {
 }
 
 func TestSayReplacesPlaceholders(t *testing.T) {
-	got := Say(ChickenLoser, config.ToneFull, first, "{user}", "니얼굴디크")
+	got := Say(YachtLoser, config.ToneFull, first, "{user}", "니얼굴디크")
 	if !strings.Contains(got, "니얼굴디크") {
 		t.Errorf("placeholder not replaced: %q", got)
 	}

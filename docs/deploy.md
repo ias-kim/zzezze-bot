@@ -48,7 +48,7 @@ systemctl enable zzezze-bot
    ```bash
    sudo bash /tmp/install.sh /tmp/zzezze-bot
    ```
-   `zzezze-bot.new`로 복사한 뒤 `mv`로 바꿔 끼우고 `systemctl restart` 한다. 재시작할 때 진행 중인 치킨 판은 버튼이 꺼지고 재시작 안내가 뜬다.
+   `zzezze-bot.new`로 복사한 뒤 `mv`로 바꿔 끼우고 `systemctl restart` 한다. 재시작할 때 진행 중인 야추 판은 버튼이 꺼지고 재시작 안내가 뜬다.
 
 ## 확인
 
@@ -57,7 +57,7 @@ systemctl status zzezze-bot
 journalctl -u zzezze-bot -f
 ```
 
-로그에 `로그인 완료: ...`가 보이면 된다. 디스코드에서 "치킨 시킬까?"를 쳐서 버튼이 뜨는지 본다.
+로그에 `로그인 완료: ...`가 보이면 된다. 디스코드에서 "야추겜 ㄱㄱ"와 "치킨 먹자"를 쳐서 판과 버튼이 뜨는지 본다.
 
 ## 디스코드 쪽 준비 (한 번)
 

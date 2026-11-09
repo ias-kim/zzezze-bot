@@ -182,3 +182,15 @@ func TestPlayersSnapshotOnFinish(t *testing.T) {
 		t.Fatal("만료 안 됨")
 	}
 }
+
+func TestBusy(t *testing.T) {
+	r := New()
+	r.Start("m1", "c1", []string{"u1"}, nil, time.Hour, nil)
+	if !r.Busy("u1") || r.Busy("u2") {
+		t.Error("Busy 판정 오류")
+	}
+	r.Finish("m1")
+	if r.Busy("u1") {
+		t.Error("Finish 뒤에는 풀려야 함")
+	}
+}

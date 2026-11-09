@@ -8,8 +8,8 @@ type Feature string
 
 const (
 	AutoReply Feature = "autoReply" // 쮀쮀이야 계열 밈 자동 반응
-	Yacht     Feature = "yacht"     // /야추, /포인트, /랭킹
-	Nudge     Feature = "nudge"     // 치킨/시간 대화 트리거
+	Yacht     Feature = "yacht"     // "야추겜 ㄱㄱ" 빠른 판 (1차), /야추 대결·/포인트·/랭킹 (2차)
+	Nudge     Feature = "nudge"     // 음식/시간 얘기 → 시간 투표 제안
 )
 
 // Tone 은 봇 대사의 말투 강도다.

@@ -2,7 +2,7 @@
 
 - 상태: 승인됨 (2026-09-23, /office-hours → /plan-eng-review CLEAR)
 - 원본 세션 기록: `~/.gstack/projects/zzezze-bot/gwan-main-design-20260923-104757.md` (로컬 전용. 레포 안의 원천은 이 문서)
-- 관련 ADR: [0002](../adr/0002-discordgo-v029-poll.md), [0003](../adr/0003-pure-core-shared-session.md), [0004](../adr/0004-chicken-first-rollout.md)
+- 관련 ADR: [0002](../adr/0002-discordgo-v029-poll.md), [0003](../adr/0003-pure-core-shared-session.md), [0004](../adr/0004-chicken-first-rollout.md), [0006](../adr/0006-no-room-split.md)
 
 ## 문제
 
@@ -10,6 +10,8 @@ BM 증바람 서버의 두 방은 성격이 다르다.
 
 - **1번방 #채팅방**: 원정 멤버 5명의 초기 메인 방이었는데, 비핵심 인원이 들어오면서 시들해졌다. 봇의 목표는 "살리기"가 아니라 **소음을 더하지 않기**다.
 - **2번방 #개꿀이즤**: 원정 멤버 전용 방. 치킨 주문, 게임 근황, 당일 번개 약속 조율이 실시간으로 오간다.
+
+> **2026-11-09 갱신**: 비핵심 인원이 모두 강퇴되어 방을 나눌 이유가 사라졌다. 이제 봇은 모든 채널에서 같은 기능을 full 톤으로 켠다([ADR 0006](../adr/0006-no-room-split.md)). 아래 "1번방/2번방" 표현은 당시 맥락으로 남겨 둔다.
 
 5명이 빠르게 떠드는 방에서는 아무도 명령어를 치지 않는다. 그래서 봇은 **이미 오가는 말에 반응해야** 쓰인다.
 
@@ -24,13 +26,13 @@ BM 증바람 서버의 두 방은 성격이 다르다.
 
 ## 채널별 기능
 
-| 기능 (`config.Feature`) | 1번방 | 2번방 | 비고 |
-|---|---|---|---|
-| `AutoReply` | ○ (mild) | ○ (full) | 쮀쮀이야 계열 밈 반응. 방별 쿨다운 |
-| `Yacht` | ○ | ○ | `/야추`, `/포인트`, `/랭킹` (2차) |
-| `Nudge` | ✕ | ○ | 치킨/시간 대화 트리거 |
+| 기능 (`config.Feature`) | 모든 채널 (`config.Default`) | 비고 |
+|---|---|---|
+| `AutoReply` | ○ (full) | 쮀쮀이야 계열 밈 반응. 채널별 쿨다운 |
+| `Yacht` | ○ | `/야추`, `/포인트`, `/랭킹` (2차) |
+| `Nudge` | ○ | 치킨/시간 대화 트리거 |
 
-실제 값은 `config/channels.go`가 원천이다. 이 표는 설명용이다.
+특정 방만 다르게 하려면 `config.Overrides`에 채널을 넣는다. 실제 값은 `config/channels.go`가 원천이고, 이 표는 설명용이다.
 
 ## 구조와 의존 방향
 
@@ -69,7 +71,7 @@ main.go ──▶ features/ ──▶ yacht/ session/ voice/ config/ interaction
 - `userID → msgID` 역인덱스를 둔다. 한 유저는 수락 대기 중인 판까지 포함해 **동시에 판 1개**만 가질 수 있다.
 - `CloseAll()`은 종료할 때 모든 타이머를 멈추고 남은 판 목록을 돌려준다.
 
-## 2번방 대화 트리거 (`features/nudge.go`)
+## 대화 트리거 (`features/triggers.go`, `features/bot.go`)
 
 - **치킨**: "치킨"과 의도 표현(`시킬|시켜|먹을|ㄱ|뭐먹|?`)이 **함께** 나올 때만 반응한다 → `[🎲 야추로 정하기] [🔕 오늘 그만]`
   - 60초 동안 참가자를 받는다. 2명 미만이면 취소한다(`voice.ChickenCancel`).
@@ -78,7 +80,7 @@ main.go ──▶ features/ ──▶ yacht/ session/ voice/ config/ interaction
   - 포인트는 움직이지 않는다. 2차부터 `matches(kind='chicken')`에 기록한다.
 - **시간**: `몇\s*시|언제\s*(봄|볼|만나)` 같은 말 → `[⏰ 시간 투표]`
   - 봇이 디스코드 **기본 투표**를 복수 선택으로 올린다. 선택지는 오늘 18~23시 중 아직 지나지 않은 정각이다. 모두 지났으면 내일 18~23시를 쓴다. 3시간 뒤 마감한다.
-- **밈** (`features/autoreply.go`, 두 방 모두): "쮀쮀" 계열에만 반응한다. "줘줘", "졸졸"은 평범한 말에 오작동하므로 제외한다. 패턴이 단순해서 테스트 안의 표로 충분하다.
+- **밈** (`features/triggers.go`의 `IsMeme`, 채널별 쿨다운 3분): "쮀쮀" 계열에만 반응한다. "줘줘", "졸졸"은 평범한 말에 오작동하므로 제외한다. 패턴이 단순해서 테스트 안의 표로 충분하다.
 - **소음 제어**: 트리거별·채널별 쿨다운은 30분이다. `[🔕 오늘 그만]`을 누르면 KST 자정까지 해당 트리거를 멈춘다. 봇 메시지와 명령어 메시지에는 반응하지 않는다.
 - **트리거 테스트 데이터** (nudge 전용): 실제 2번방 문장으로 `features/testdata/nudge_hit.txt`, `nudge_miss.txt`를 만들고 테이블 테스트로 고정한다.
 
@@ -141,7 +143,12 @@ main.go ──▶ features/ ──▶ yacht/ session/ voice/ config/ interaction
 
 - `GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build`로 빌드하고, **EC2 t4g.nano**(서울)에서 systemd로 띄운다. Go 봇은 메모리를 수십 MB만 써서 nano(512MB)로 충분하다. 비용은 `docs/harness/profile.md` 참고.
 - 배포는 원자적으로 한다. `zzezze-bot.new`로 업로드한 뒤 `mv`로 바꿔치기하고 `systemctl restart`한다.
+- 서버 만들기와 등록은 사용자가 AWS 에이전트로 한다. 단계별 절차는 [docs/deploy.md](../deploy.md)가 원천이다.
 - (2차) DB는 매일 `sqlite3 .backup`으로 백업하고, 백업본은 **EC2 밖**(로컬 Mac 또는 S3)에 보관한다.
+
+## 나중에 (아이디어)
+
+- **롤 파티 모집** (`/파티` 또는 대화 트리거 "5인큐", "증바람 ㄱ" 등): 모드(5인 자유랭크/일반, 칼바람·증바람 등)와 시작 시각을 정해 모집 글을 올리고 `[🙋 참가]`로 자리를 채운다. 다 차면 참가자 전원을 멘션한다. 치킨 판과 같은 `session.Registry`(메시지 ID 키, 방치 타이머, 1회 종료)와 `interactions` 버튼 형식을 그대로 쓸 수 있다. 시작하기 전에 exec-plan을 먼저 쓴다.
 
 ## 범위 밖
 
@@ -150,7 +157,7 @@ main.go ──▶ features/ ──▶ yacht/ session/ voice/ config/ interaction
 ## 열린 질문
 
 - 포인트를 다 잃은 사람이 다시 참여할 방법(일일 보너스 등). 2차 배포 첫 주 결과를 보고 정한다.
-- 1번방 자동 반응 쿨다운의 적정값.
+- 밈 자동 반응 쿨다운(지금 3분)의 적정값.
 
 ## 성공 기준
 

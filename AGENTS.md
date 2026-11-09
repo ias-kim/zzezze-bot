@@ -1,6 +1,6 @@
 # AGENTS.md
 
-BM 증바람 서버용 디스코드 봇. 봇 1개가 채널 ID를 보고 방마다 다른 기능을 실행한다.
+BM 증바람 서버용 디스코드 봇. 서버의 모든 채널에서 같은 기능을 켠다(방 구분은 [ADR 0006](docs/adr/0006-no-room-split.md)으로 폐지).
 
 **세션을 시작하면 먼저 [docs/handoff.md](docs/handoff.md)를 읽는다.** 마지막으로 어디까지 했고 다음에 뭘 할지가 적혀 있다. 설계는 `docs/design/six-member.md`, 진행 중인 작업은 `docs/exec-plans/active/`를 본다.
 
@@ -12,6 +12,7 @@ make test        # go test -race ./...
 make layers      # 의존 방향 검사만 (scripts/check-layers.sh)
 make agents      # .claude/agents 와 .codex/agents 지시문이 같은지 (scripts/check-agents-sync.sh)
 make run         # 로컬 실행 (.env 필요, .env.example 참고)
+make dist        # 배포용 linux/arm64 바이너리 → dist/ (절차: docs/deploy.md)
 ```
 
 PR을 올리기 전과 "고쳤다"고 말하기 전에 `make check`를 통과시킨다. CI(`.github/workflows/ci.yml`)도 같은 `make check`를 실행한다.
@@ -21,15 +22,16 @@ PR을 올리기 전과 "고쳤다"고 말하기 전에 `make check`를 통과시
 discordgo는 `main.go`와 `features/`에서만 import한다(`_test.go` 포함). 나머지는 디스코드 없이 `go test`로 검증되는 순수 패키지다. `features/`와 `store/`를 import할 수 있는 쪽은 `main.go`와 `features/`뿐이다(순수 패키지는 이 둘을 모른다). 이 규칙은 `make layers`가 **새 패키지까지 자동으로** 강제한다. 근거는 `docs/adr/0003-pure-core-shared-session.md`에 있다.
 
 있는 것:
-- `config/`: 채널 → 기능(`Feature` 상수), 말투(`Tone`) 매핑만 둔다. 기능이 켜져 있는지는 `config.Enabled()`로, 채널 설정은 `config.Lookup()`으로만 조회한다(맵을 직접 열지 않는다).
+- `config/`: 기본 기능(`Feature` 상수)·말투(`Tone`)와 채널별 예외(`Overrides`)만 둔다. 기능이 켜져 있는지는 `config.Enabled()`로, 채널 설정은 `config.Lookup()`으로만 조회한다(맵을 직접 열지 않는다).
 - `interactions/`: 버튼 custom_id 형식(`기능:동작[:인자]`)을 인코딩/디코딩한다.
 - `voice/`: 봇 대사집(full/mild)과 주사위 눈. 로직 코드에 한국어 대사를 직접 쓰지 않고 `voice.Say()`로 가져온다. 새 대사 키는 상수, `keys` 목록, `lines` 표 세 곳에 넣는다(테스트가 어긋남을 잡는다).
+- `session/`: 버튼 달린 판의 메모리 상태(`Registry`: 타이머, `Finish` 1회 보장, 유저 역인덱스, `CloseAll`)와 소음 제어(`Throttle`: 쿨다운, KST 자정까지 멈춤).
+- `yacht/`: 게임 규칙 순수 함수. 1차는 치킨 판(`Chicken`). 무작위성은 `Roller`, `Pick`으로 주입받는다.
+- `features/`: 디스코드 이벤트 ↔ 순수 로직 변환과 화면 그리기만 한다. 트리거 판정(`triggers.go`)과 시간 슬롯(`timepoll.go`)은 discordgo 없이 테스트한다.
 - `main.go`: 세션 생성, 인텐트, 핸들러 등록, 종료 순서만 담당한다.
+- `deploy/`, `scripts/install.sh`: systemd 유닛과 서버용 원자적 설치 스크립트. 서버 등록은 사용자가 AWS 에이전트로 한다(`docs/deploy.md`).
 
-예정 (exec-plan 단계 표기):
-- `session/` (1차 3단계): 버튼 달린 판의 메모리 상태, 타이머, 1회 종료 보장.
-- `features/` (1차 4~7단계): 디스코드 이벤트 ↔ 순수 로직 변환과 화면 그리기만 한다.
-- `yacht/` (1차 5단계 치킨 판, 2차 대결): 게임 규칙을 순수 함수로 둔다. 무작위성은 주입받는다(이름은 구현할 때 정한다).
+예정:
 - `store/` (2차): SQLite. 모든 함수가 `*sql.Tx`를 받는다.
 
 ## 사실의 원천

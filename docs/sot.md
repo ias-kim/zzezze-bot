@@ -4,7 +4,7 @@
 
 | 사실 유형 | SoT | 파생 (값을 복사하는 곳) | 일치 점검 |
 |---|---|---|---|
-| 채널 ↔ 기능 매핑, 방별 말투 | `config/channels.go` | 설계 문서 "채널별 기능" 표 (설명용) | 코드 자체는 `config/channels_test.go`, 설계 표는 수동 |
+| 기본 기능·말투, 채널별 예외 | `config/channels.go` (`Default`, `Overrides`) | 설계 문서 "채널별 기능" 표 (설명용) | 코드 자체는 `config/channels_test.go`, 설계 표는 수동 |
 | 봇 대사, 대사 키, 주사위 눈 | `voice/lines.go` | 없음 | `make check` (`keys` 목록 ↔ `lines` 표 집합 일치, 키마다 full/mild 존재) |
 | 버튼 custom_id 형식 | `interactions/customid.go` | 설계 문서, AGENTS.md 설명 | `make check` (codec 테스트) |
 | 제품 설계, 게임 규칙(족보 표 등) | `docs/design/six-member.md` | 2차에서 `yacht/` 테이블 테스트로 옮김 | 옮긴 뒤에는 테스트 |
@@ -14,6 +14,8 @@
 | 게이트 1 검사 항목 | `Makefile` (`check` 타깃) | AGENTS.md 명령어 절, CI | 수동 |
 | DB 스키마 (2차) | `store/schema.sql` (예정) | 없음 | store 테스트가 스키마를 적용해서 실행 |
 | 환경 변수 목록 | `.env.example` | 없음 (README는 링크만) | - |
+| 배포 절차, 서버 조건 | `docs/deploy.md` (+ `deploy/zzezze-bot.service`, `scripts/install.sh`) | 설계 문서 "배포" 절은 링크만 | 수동 |
+| 대화 트리거 문장 | `features/triggers.go` 정규식 + `features/testdata/nudge_*.txt` | 설계 문서 설명 | `make check` (테이블 테스트) |
 | 설계 결정 | `docs/adr/*.md` | AGENTS.md, profile.md는 링크만 | 수동 |
 | 하네스 설정, 비용 방침 | `docs/harness/profile.md` | - | - |
 | 진행 중 작업, 완료 기준 | `docs/exec-plans/active/*.md` | 완료 시 `completed/`로 이동 | 수동 |

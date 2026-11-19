@@ -1,0 +1,29 @@
+# nudge 트리거 판정 초안 (hit). 형식: 기대트리거<TAB>문장
+# 초안이다. 실제 2번방 문장은 배포 뒤 행으로 추가한다. 한 줄에 한 문장, #은 주석.
+chicken	오늘 치킨 시킬까?
+chicken	치킨 먹을래?
+chicken	야 치킨 ㄱ
+chicken	치킨ㄱㄱ
+chicken	저녁 치킨 시켜먹자
+chicken	치킨 시켜
+chicken	배고프다 치킨?
+chicken	오늘 뭐먹지 치킨 어때
+chicken	치킨 뭐먹
+chicken	교촌 치킨 ㄱ?
+chicken	치킨 먹을 사람
+chicken	오늘 밤에 치킨 시킬 사람 손
+chicken	치킨 시킬까 말까
+chicken	ㅇㅋ 그럼 치킨 시켜야겠다
+time	몇시에 볼까?
+time	몇 시에 모여?
+time	내일 몇시?
+time	오늘 몇 시부터 가능?
+time	몇시쯤 접속해?
+time	언제 봄?
+time	언제 볼까
+time	언제 만나?
+time	다들 언제 만날래
+time	몇 시 가능한 사람?
+time	오늘 몇시에 들어와
+time	몇 시야 지금
+time	언제 봄 ㅋㅋ

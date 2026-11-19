@@ -98,3 +98,20 @@ func TestDie(t *testing.T) {
 		}
 	}
 }
+
+// 시간 투표 선택지 라벨은 {hour} 를 치환하고, 오늘/내일이 구분돼야 한다.
+func TestTimeOptionLabels(t *testing.T) {
+	for _, tone := range []config.Tone{config.ToneFull, config.ToneMild} {
+		today := Say(TimeOptionToday, tone, first, "{hour}", "18")
+		tomorrow := Say(TimeOptionTomorrow, tone, first, "{hour}", "18")
+		if !strings.Contains(today, "18") || !strings.Contains(tomorrow, "18") {
+			t.Errorf("tone %q: hour not replaced: %q / %q", tone, today, tomorrow)
+		}
+		if today == tomorrow {
+			t.Errorf("tone %q: today and tomorrow labels are the same: %q", tone, today)
+		}
+		if Say(TimePollFailed, tone, first) == "" {
+			t.Errorf("tone %q: TimePollFailed is empty", tone)
+		}
+	}
+}

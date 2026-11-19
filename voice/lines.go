@@ -18,25 +18,28 @@ import (
 type Key string
 
 const (
-	MemeReply       Key = "meme.reply"       // 쮀쮀이야 밈에 자동 반응
-	NudgeChicken    Key = "nudge.chicken"    // "치킨 시킬까?" → 야추로 정하기 제안
-	NudgeTime       Key = "nudge.time"       // "몇시?" → 시간 투표 제안
-	NudgeMuted      Key = "nudge.muted"      // [오늘 그만] 눌렀을 때
-	ChickenOpen     Key = "chicken.open"     // 참가 모집 시작
-	ChickenJoined   Key = "chicken.joined"   // {user} 참가
-	ChickenCancel   Key = "chicken.cancel"   // 참가자 부족으로 취소
-	ChickenTie      Key = "chicken.tie"      // 동점 재굴림
-	ChickenLoser    Key = "chicken.loser"    // {user} 당첨 (치킨값 담당)
-	TimePollTitle   Key = "time.poll.title"  // 시간 투표 질문
-	SessionExpired  Key = "session.expired"  // 만료된 버튼을 눌렀을 때
-	SessionRestart  Key = "session.restart"  // 봇 재시작으로 판 취소
-	NotYourButton   Key = "button.notyours"  // 남의 판 버튼을 눌렀을 때
-	WrongChannel    Key = "channel.wrong"    // 기능이 꺼진 채널에서 커맨드 사용
-	AlreadyInGame   Key = "session.busy"     // 이미 진행 중인 판이 있을 때
-	ChickenBtnLabel Key = "chicken.btn.play" // [🎲 야추로 정하기] 버튼 라벨
-	TimeBtnLabel    Key = "time.btn.poll"    // [⏰ 시간 투표] 버튼 라벨
-	MuteBtnLabel    Key = "nudge.btn.mute"   // [🔕 오늘 그만] 버튼 라벨
-	JoinBtnLabel    Key = "chicken.btn.join" // [🙋 참가] 버튼 라벨
+	MemeReply          Key = "meme.reply"           // 쮀쮀이야 밈에 자동 반응
+	NudgeChicken       Key = "nudge.chicken"        // "치킨 시킬까?" → 야추로 정하기 제안
+	NudgeTime          Key = "nudge.time"           // "몇시?" → 시간 투표 제안
+	NudgeMuted         Key = "nudge.muted"          // [오늘 그만] 눌렀을 때
+	ChickenOpen        Key = "chicken.open"         // 참가 모집 시작
+	ChickenJoined      Key = "chicken.joined"       // {user} 참가
+	ChickenCancel      Key = "chicken.cancel"       // 참가자 부족으로 취소
+	ChickenTie         Key = "chicken.tie"          // 동점 재굴림
+	ChickenLoser       Key = "chicken.loser"        // {user} 당첨 (치킨값 담당)
+	TimePollTitle      Key = "time.poll.title"      // 시간 투표 질문
+	TimeOptionToday    Key = "time.option.today"    // 투표 선택지 "오늘 {hour}시"
+	TimeOptionTomorrow Key = "time.option.tomorrow" // 투표 선택지 "내일 {hour}시"
+	TimePollFailed     Key = "time.poll.failed"     // 투표 게시 실패 (권한 등)
+	SessionExpired     Key = "session.expired"      // 만료된 버튼을 눌렀을 때
+	SessionRestart     Key = "session.restart"      // 봇 재시작으로 판 취소
+	NotYourButton      Key = "button.notyours"      // 남의 판 버튼을 눌렀을 때
+	WrongChannel       Key = "channel.wrong"        // 기능이 꺼진 채널에서 커맨드 사용
+	AlreadyInGame      Key = "session.busy"         // 이미 진행 중인 판이 있을 때
+	ChickenBtnLabel    Key = "chicken.btn.play"     // [🎲 야추로 정하기] 버튼 라벨
+	TimeBtnLabel       Key = "time.btn.poll"        // [⏰ 시간 투표] 버튼 라벨
+	MuteBtnLabel       Key = "nudge.btn.mute"       // [🔕 오늘 그만] 버튼 라벨
+	JoinBtnLabel       Key = "chicken.btn.join"     // [🙋 참가] 버튼 라벨
 )
 
 // keys 는 선언된 모든 대사 키 목록이다. 새 키를 만들면 여기에도 추가한다.
@@ -44,7 +47,7 @@ const (
 var keys = []Key{
 	MemeReply, NudgeChicken, NudgeTime, NudgeMuted,
 	ChickenOpen, ChickenJoined, ChickenCancel, ChickenTie, ChickenLoser,
-	TimePollTitle, SessionExpired, SessionRestart, NotYourButton, WrongChannel, AlreadyInGame,
+	TimePollTitle, TimeOptionToday, TimeOptionTomorrow, TimePollFailed, SessionExpired, SessionRestart, NotYourButton, WrongChannel, AlreadyInGame,
 	ChickenBtnLabel, TimeBtnLabel, MuteBtnLabel, JoinBtnLabel,
 }
 
@@ -90,6 +93,18 @@ var lines = map[Key]toneLines{
 	TimePollTitle: {
 		config.ToneFull: {"몇시에 봄? 되는 시간 다 찍어라 (복수 선택)", "아.. 예?.. 몇시요? 가능한 시간 다 고르세요"},
 		config.ToneMild: {"가능한 시간을 모두 골라주세요"},
+	},
+	TimeOptionToday: {
+		config.ToneFull: {"오늘 {hour}시"},
+		config.ToneMild: {"오늘 {hour}시"},
+	},
+	TimeOptionTomorrow: {
+		config.ToneFull: {"내일 {hour}시"},
+		config.ToneMild: {"내일 {hour}시"},
+	},
+	TimePollFailed: {
+		config.ToneFull: {"아.. 예?.. 투표를 못 올렸어요 줴~랄~ (봇 권한 확인 필요)"},
+		config.ToneMild: {"투표를 올리지 못했어요. 봇 권한을 확인해 주세요."},
 	},
 	SessionExpired: {
 		config.ToneFull: {"아.. 예?.. 이미 끝난 판입니다 줴~랄~"},

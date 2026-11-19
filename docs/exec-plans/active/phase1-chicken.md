@@ -83,6 +83,73 @@ nudge 트리거(`features/nudge.go`, testdata)와 디스코드 연결은 2번방
 **진단 반영 (2026-11-19 마피아MCP 검토)**
 - [x] `main.go`가 메시지 원문과 작성자를 로그에 남기지 않는다(운영 서버 로그에 대화가 쌓이지 않게).
 
+## 5~7단계 연결 계약 (2026-11-19, W1 에이전트 공통 입력)
+
+오케스트레이션: W0(계약, 이 절) → W1 병렬(A nudge, B 치킨, C 시간 투표, F 배포 파일) → W2 통합 → W3 리뷰 → U2 테스트 서버 → U3 AWS 승인 → W4 배포 → U4 병합. A·B·C는 같은 `features` 패키지라 워크트리로 격리한다. nudge 테스트 데이터는 **초안으로 먼저** 만든다(사용자 결정 2026-11-19, 실제 2번방 문장은 배포 뒤 행으로 추가).
+
+### 흐름
+
+1. 2번방 메시지 → **A** `Nudge.Handle`: 트리거(chicken/time) 판정 + 트리거별 쿨다운 → 원문에 답장으로 제안 메시지와 버튼을 단다.
+   - chicken: `NudgeChicken` + [`chicken:open` `ChickenBtnLabel`] [`nudge:mute:chicken` `MuteBtnLabel`]
+   - time: `NudgeTime` + [`timevote:open` `TimeBtnLabel`] [`nudge:mute:time` `MuteBtnLabel`]
+2. `nudge:mute:<trigger>` (**A**): `gate.MuteToday` → `updateMessage(NudgeMuted, 버튼 없음)`.
+3. `chicken:open` (**B**): 제안 메시지를 그대로 판 메시지로 바꾼다. `Registry.Start(i.Message.ID, Users=[누른 사람], Idle=60s, OnExpire=정산)`. `ErrUserBusy`면 ephemeral `AlreadyInGame`. 성공하면 `updateMessage(ChickenOpen + 참가자 목록, [chicken:join JoinBtnLabel])`.
+4. `chicken:join` (**B**): `Registry.Join`. `ErrNotFound`면 ephemeral `SessionExpired`, `ErrUserBusy`·`ErrAlreadyJoined`면 ephemeral `AlreadyInGame`. 성공하면 `Do`로 참가자를 추가하고 `updateMessage`. **Join은 Touch하지 않는다**(모집 60초 고정).
+5. 만료 `OnExpire` (**B**): `yacht.PlayChicken`. `ErrNotEnoughPlayers`면 `editMessage(ChickenCancel)`. 아니면 라운드별 주사위·합계(재굴림 라운드 앞에 `ChickenTie`)와 `ChickenLoser`를 그려 `editMessage` **한 번**, 버튼 없음.
+6. `timevote:open` (**C**): `updateMessage`로 제안 메시지의 버튼을 없앤 뒤 `ChannelMessageSendComplex`로 기본 투표를 올린다. 실패하면 로그와 채널에 `TimePollFailed`.
+7. 종료 (**W2**): `CloseAll` → 상태가 `closable`이면 `editMessage(SessionRestart, 버튼 없음)`, 전체 5초 제한 → `dg.Close`.
+
+### 공용 (W0에서 커밋. W1 에이전트는 고치지 않는다)
+
+- `features/respond.go`: `replyEphemeral`, `updateMessage`, `editMessage`(타이머·종료용), `userID`, `mention`, `noMentions`
+- `voice` 키: 기존 키 + `TimeOptionToday`/`TimeOptionTomorrow`(`{hour}` 치환), `TimePollFailed`. 새 대사가 필요하면 만들지 말고 보고한다.
+- 쓰는 순수 패키지: `interactions.Encode/Decode`, `session.Registry`, `quiet.Gate`(`Allow`, `MuteToday`), `yacht.PlayChicken`, `timevote.Options`/`Duration`
+- 종료 인터페이스 (W2가 `features/router.go`에 선언): `type closable interface{ closeInfo() (channelID string, tone config.Tone) }`. B의 판 상태는 이 메서드를 구현한다.
+
+### 공개 API (W2 라우터가 이 이름으로 연결)
+
+| 소유 | 생성자 | 메서드 | custom_id feature |
+|---|---|---|---|
+| A `features/nudge.go` | `NewNudge(gate *quiet.Gate) *Nudge`, `const NudgeCooldown = 30 * time.Minute` | `Handle(s, *discordgo.MessageCreate)`, `HandleComponent(s, *discordgo.InteractionCreate, interactions.ID)` | `nudge` |
+| B `features/chicken.go` | `NewChicken(reg *session.Registry) *Chicken` | `HandleComponent(...)` | `chicken` |
+| C `features/timepoll.go` | `NewTimeVote() *TimeVote` | `HandleComponent(...)` | `timevote` |
+
+- 시간·난수는 공개 필드로 주입한다: `Now func() time.Time`, `Pick voice.Picker`, B는 `Roll func() int` 추가. 기본값은 `time.Now`, `rand.IntN`.
+- 같은 패키지 이름 충돌 방지: 패키지 수준 비공개 이름에는 접두어를 붙인다(`nudge…`, `chicken…`, `timeVote…`). testdata 파일도 접두어로 구분한다.
+- 판단과 화면 문자열은 순수 함수로 테스트한다(디스코드 호출은 얇게).
+
+### 완료 기준 (W1~W3)
+
+**A nudge**
+- [ ] `features/testdata/nudge_hit.txt`, `nudge_miss.txt`(초안)를 읽는 테이블 테스트로 판정을 고정한다
+- [ ] 치킨은 "치킨"과 의도(`시킬|시켜|먹을|ㄱ|뭐먹|?`)가 함께일 때만, 시간은 `몇\s*시|언제\s*(봄|볼|만나)`
+- [ ] Nudge가 꺼진 채널(1번방), 봇 메시지, `/`·`!` 메시지는 무시한다. 트리거별 쿨다운 30분, 음소거 중에는 반응하지 않는다
+- [ ] mute 버튼은 `MuteToday` 후 메시지를 갱신한다
+
+**B 치킨 판**
+- [ ] open: 누른 사람이 첫 참가자다. 이미 다른 판에 있으면 거절한다
+- [ ] join: 모집 60초 고정. 중복·다른 판·만료를 처리한다
+- [ ] 정산: 2명 미만이면 취소, 결과는 메시지를 한 번 수정, 결과 문자열은 순수 함수로 테스트(재굴림 라운드 표시 포함)
+
+**C 시간 투표**
+- [ ] 투표: 복수 선택, 선택지는 `timevote.Options`의 라벨(오늘/내일 `{hour}`시), **`Poll.Duration == 3`(시간 단위)를 테스트로 고정**
+- [ ] 게시에 실패하면 로그를 남기고 `TimePollFailed`를 보낸다 (권한 리스크)
+
+**F 배포 파일**
+- [ ] `scripts/deploy.sh`: arm64 빌드 → `.new` 업로드 → 기존 바이너리를 `.prev`로 보존 → `mv` → restart. `rollback` 하위 명령으로 `.prev`를 되돌린다
+- [ ] `deploy/zzezze-bot.service`: `Restart=always`, 전용 계정, `EnvironmentFile`(권한 600), `TimeoutStopSec` 10초 이상
+- [ ] `docs/deploy.md`: EC2 준비(AWS 리전·플랜 확인 포함), 첫 배포, 되돌리기
+
+**W2 통합**
+- [ ] 라우터: custom_id → feature 핸들러. 디코드 실패·모르는 feature는 로그만 남기고 무시한다
+- [ ] 모든 핸들러를 recover 래퍼로 감싼다(패닉을 로그로 남기고 프로세스 유지). 그래도 죽으면 systemd가 재시작한다
+- [ ] SIGTERM: `CloseAll` → 버튼 끄기와 `SessionRestart`(5초 제한) → `dg.Close`
+- [ ] `make check` 통과
+
+**W3**
+- [ ] reviewer 서브에이전트 지적 반영
+- [ ] 테스트 서버 수동 확인 목록 작성 (MESSAGE CONTENT 인텐트, Send Polls 권한, 답장·버튼·투표 화면)
+
 ## 결정 로그
 
 - 2026-09-23: 치킨 먼저 배포하고 야추 대결과 원장은 2차로 미룸 ([ADR 0004](../../adr/0004-chicken-first-rollout.md))
@@ -95,3 +162,4 @@ nudge 트리거(`features/nudge.go`, testdata)와 디스코드 연결은 2번방
 - 2026-10-16: 방치 시간은 `Start` 때 고정하고 `Touch(msgID)`는 인자로 시간을 받지 않는다. 대결(2차)에서 수락 대기와 본게임의 방치 시간이 달라야 하면 그때 추가한다
 - 2026-10-16: 밈 트리거를 변형(줴줴이야, 체재희야, 제제이야, 자모 분리)까지 넓힘. 오작동 여부는 1차 배포 후 관찰. 쿨다운은 순수 패키지 `quiet/`로 분리 (사용자 결정)
 - 2026-11-19: 마피아MCP 검토 반영. (1) 메시지 원문 로그 제거. (2) 하네스·문서는 지금 규모(6명, 운영 코드 약 800줄)에 비해 충분하므로 **새 절차·검사를 더 늘리지 않는다**. 그래서 ADR 0005의 store PR 템플릿 체크박스는 만들지 않는다(리뷰 요청만으로 충분, 기술 부채 줄 삭제). (3) 문장 수집에 막히지 않은 5·6단계 순수 로직을 먼저 진행한다
+- 2026-11-19: 리스크 검토 반영. profile의 사실과 다른 두 줄 수정(토큰 검사 없음, 구현 병렬화 조건). 투표 시간 단위·권한, recover/Restart, `.prev` 되돌리기, EC2 토큰 파일, AWS 리전 확인을 완료 기준에 넣음. nudge 테스트 데이터는 초안으로 먼저 진행(사용자 결정)

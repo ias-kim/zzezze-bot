@@ -59,6 +59,7 @@ func sameDay(a, b time.Time) bool {
 // HandleComponent 는 `timevote` 버튼을 처리한다. 지금은 "open" 만 있다.
 func (tv *TimeVote) HandleComponent(s *discordgo.Session, i *discordgo.InteractionCreate, id interactions.ID) {
 	if id.Action != "open" {
+		ackSilently(s, i)
 		return
 	}
 	tone := config.ToneMild

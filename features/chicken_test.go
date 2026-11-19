@@ -247,3 +247,22 @@ func TestChickenJoinRow(t *testing.T) {
 		t.Errorf("label = %q", btn.Label)
 	}
 }
+
+// 같은 제안 메시지의 [야추로 정하기]를 여러 명이 거의 동시에 누르면, 첫 번째는 판을 열고 나머지는 참가한다.
+func TestChickenOpenOrJoin_동시클릭은_참가로(t *testing.T) {
+	reg := session.New()
+	if _, err := chickenOpenOrJoin(reg, "m1", "ch1", "u1", config.ToneMild, chickenFirst, nil); err != nil {
+		t.Fatalf("첫 클릭: %v", err)
+	}
+	text, err := chickenOpenOrJoin(reg, "m1", "ch1", "u2", config.ToneMild, chickenFirst, nil)
+	if err != nil {
+		t.Fatalf("두 번째 클릭은 참가여야 한다: %v", err)
+	}
+	if !strings.Contains(text, mention("u2")) {
+		t.Errorf("모집 화면에 u2 가 없다: %q", text)
+	}
+	if _, err := chickenOpenOrJoin(reg, "m1", "ch1", "u1", config.ToneMild, chickenFirst, nil); !errors.Is(err, session.ErrAlreadyJoined) {
+		t.Errorf("이미 참가한 사람의 재클릭 = %v, want ErrAlreadyJoined", err)
+	}
+	reg.CloseAll()
+}

@@ -28,11 +28,10 @@ discordgo는 `main.go`와 `features/`에서만 import한다(`_test.go` 포함). 
 - `quiet/`: 소음 제어. 채널+트리거별 쿨다운(`Gate.Allow`)과 KST 자정까지 음소거(`Gate.MuteToday`, "오늘 그만"). 시각은 인자로 받는다.
 - `yacht/`: 게임 규칙 순수 함수. 지금은 치킨 판(`PlayChicken`). 주사위와 무작위 선택은 주입받는다.
 - `timevote/`: 시간 투표 선택지(KST 18~23시 중 지나지 않은 정각) 계산. 시각은 인자로 받는다.
-- `features/`: 디스코드 이벤트 ↔ 순수 로직 변환과 화면 그리기만 한다. 판단은 디스코드 없이 테스트되는 함수(`Decide` 등)로 둔다. 지금은 `autoreply.go`.
+- `features/`: 디스코드 이벤트 ↔ 순수 로직 변환과 화면 그리기만 한다. 판단은 디스코드 없이 테스트되는 함수(`Decide` 등)로 둔다. 파일: `autoreply.go`(밈), `nudge.go`(2번방 제안·오늘 그만), `chicken.go`(치킨 판), `timepoll.go`(시간 투표), `router.go`(버튼 라우팅·패닉 복구·종료), `respond.go`(상호작용 응답 헬퍼).
 - `main.go`: 세션 생성, 인텐트, 핸들러 등록, 종료 순서만 담당한다.
 
 예정 (exec-plan 단계 표기):
-- `features/` 나머지 (1차 5~7단계): nudge, 치킨 판 화면, 시간 투표 게시.
 - `yacht/` 2차 대결(`Duel.Apply`).
 - `store/` (2차): SQLite. 모든 함수가 `*sql.Tx`를 받는다.
 

@@ -47,9 +47,12 @@ func (r *Router) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	h, id, ok := r.lookup(customID)
 	if !ok {
 		log.Printf("모르는 버튼 custom_id=%q", customID)
+		ackSilently(s, i)
 		return
 	}
-	safeRun("button "+id.Feature, func() { h(s, i, id) })
+	if panicked := safeRun("button "+id.Feature, func() { h(s, i, id) }); panicked {
+		ackSilently(s, i) // 응답 전에 죽었으면 "상호작용 실패" 대신 조용히 받는다
+	}
 }
 
 // SafeMessage 는 메시지 핸들러의 패닉을 로그로 남기고 삼킨다(discordgo 는 핸들러 패닉을 잡지 않는다).
@@ -59,14 +62,17 @@ func SafeMessage(name string, h func(*discordgo.Session, *discordgo.MessageCreat
 	}
 }
 
-// safeRun 은 f 의 패닉을 스택과 함께 로그로 남긴다. 그래도 프로세스가 죽으면 systemd 가 재시작한다.
-func safeRun(name string, f func()) {
+// safeRun 은 f 의 패닉을 스택과 함께 로그로 남기고, 패닉이 있었는지 돌려준다.
+// 그래도 프로세스가 죽으면 systemd 가 재시작한다.
+func safeRun(name string, f func()) (panicked bool) {
 	defer func() {
 		if v := recover(); v != nil {
+			panicked = true
 			log.Printf("패닉 복구 (%s): %v\n%s", name, v, debug.Stack())
 		}
 	}()
 	f()
+	return false
 }
 
 // closable 은 종료할 때 버튼을 끄고 안내를 띄울 판 상태가 구현한다.

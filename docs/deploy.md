@@ -4,7 +4,7 @@
 
 ## 1. 사전 확인
 
-- AWS Settings 에서 프로젝트 리전이 서울(ap-northeast-2)인지, 플랜과 지출 한도를 확인한다. 이 계정은 리전 하나로 고정돼 있어 다른 리전에는 만들 수 없다.
+- AWS Settings > View all projects > Overview > Additional Info > Region 에서 프로젝트 리전을 확인한다. 이 계정은 리전 하나로 고정돼 있고(계정 주소로 정해짐) 다른 리전에는 만들 수 없다. 설계는 서울(ap-northeast-2)을 가정하므로 다르면 비용·지연을 다시 본다. 플랜(무료/유료)과 지출 한도도 확인한다.
 - 인스턴스: t4g.nano, Amazon Linux 2023 arm64.
 - 보안 그룹: 인바운드는 SSH(내 IP)만 연다. 봇은 아웃바운드(디스코드 접속)만 필요하다.
 
@@ -25,15 +25,15 @@ sudo chmod 755 /opt/zzezze-bot
 로컬에서 `.env` 를 올린다([.env.example](../.env.example) 참고). 토큰은 systemd 가 root 로 읽으므로 서비스 계정이 읽을 필요는 없다.
 
 ```bash
-scp .env <ssh-host>:/opt/zzezze-bot/.env
-ssh <ssh-host> 'chmod 600 /opt/zzezze-bot/.env'
+# umask 077 로 처음부터 600 으로 만든다(scp 후 chmod 하면 잠깐 다른 계정이 읽을 수 있다).
+ssh <ssh-host> 'umask 077; cat > /opt/zzezze-bot/.env' < .env
 ```
 
 unit 설치와 enable (로컬 레포에서):
 
 ```bash
 scp deploy/zzezze-bot.service <ssh-host>:/tmp/
-ssh <ssh-host> 'sudo mv /tmp/zzezze-bot.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable zzezze-bot'
+ssh <ssh-host> 'sudo install -o root -g root -m 644 /tmp/zzezze-bot.service /etc/systemd/system/ && rm /tmp/zzezze-bot.service && sudo systemctl daemon-reload && sudo systemctl enable zzezze-bot'
 ```
 
 enable 만 하고 시작은 첫 배포가 한다.

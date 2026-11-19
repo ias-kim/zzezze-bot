@@ -81,6 +81,15 @@ func chickenOpen(reg *session.Registry, msgID, channelID, user string, tone conf
 	return st.openScreen(), nil
 }
 
+// chickenOpenOrJoin 은 [야추로 정하기] 처리다. 같은 메시지를 다른 사람이 먼저 판으로 열었으면(동시 클릭) 참가로 처리한다.
+func chickenOpenOrJoin(reg *session.Registry, msgID, channelID, user string, tone config.Tone, pick voice.Picker, onExpire func(string, any)) (string, error) {
+	text, err := chickenOpen(reg, msgID, channelID, user, tone, pick, onExpire)
+	if errors.Is(err, session.ErrExists) {
+		return chickenJoin(reg, msgID, user, pick)
+	}
+	return text, err
+}
+
 // chickenJoin 은 참가자를 등록하고 갱신된 모집 화면을 돌려준다. 방치 타이머는 건드리지 않는다.
 func chickenJoin(reg *session.Registry, msgID, user string, pick voice.Picker) (string, error) {
 	if err := reg.Join(msgID, user); err != nil {
@@ -94,6 +103,16 @@ func chickenJoin(reg *session.Registry, msgID, user string, pick voice.Picker) (
 		text = st.openScreen()
 	})
 	return text, err
+}
+
+// chickenReject 는 open/join 실패 응답이다. 끝난 판이면 버튼도 끄고, 그 밖에는 누른 사람에게만 안내한다.
+func chickenReject(s *discordgo.Session, i *discordgo.InteractionCreate, err error, tone config.Tone, pick voice.Picker) {
+	key := chickenRejectKey(err)
+	if key == voice.SessionExpired {
+		expireButtons(s, i, voice.Say(key, tone, pick))
+		return
+	}
+	replyEphemeral(s, i, voice.Say(key, tone, pick))
 }
 
 // chickenRejectKey 는 open/join 실패를 누른 사람에게 보일 대사 키로 바꾼다.
@@ -162,6 +181,7 @@ func chickenJoinRow(tone config.Tone, pick voice.Picker) []discordgo.MessageComp
 // HandleComponent 는 chicken:open, chicken:join 버튼을 처리한다.
 func (c *Chicken) HandleComponent(s *discordgo.Session, i *discordgo.InteractionCreate, id interactions.ID) {
 	if i.Message == nil {
+		ackSilently(s, i)
 		return
 	}
 	cfg, _ := config.Lookup(i.ChannelID)
@@ -188,20 +208,21 @@ func (c *Chicken) HandleComponent(s *discordgo.Session, i *discordgo.Interaction
 				}
 			})
 		}
-		text, err := chickenOpen(c.reg, i.Message.ID, i.ChannelID, user, tone, c.Pick, onExpire)
+		text, err := chickenOpenOrJoin(c.reg, i.Message.ID, i.ChannelID, user, tone, c.Pick, onExpire)
 		if err != nil {
-			replyEphemeral(s, i, voice.Say(chickenRejectKey(err), tone, c.Pick))
+			chickenReject(s, i, err, tone, c.Pick)
 			return
 		}
 		updateMessage(s, i, text, chickenJoinRow(tone, c.Pick))
 	case "join":
 		text, err := chickenJoin(c.reg, i.Message.ID, user, c.Pick)
 		if err != nil {
-			replyEphemeral(s, i, voice.Say(chickenRejectKey(err), tone, c.Pick))
+			chickenReject(s, i, err, tone, c.Pick)
 			return
 		}
 		updateMessage(s, i, text, chickenJoinRow(tone, c.Pick))
 	default:
 		log.Printf("chicken: 모르는 동작 %q", id.Action)
+		ackSilently(s, i)
 	}
 }

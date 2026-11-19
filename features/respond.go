@@ -74,3 +74,43 @@ func userID(i *discordgo.InteractionCreate) string {
 
 // mention 은 유저 표시 문자열이다. noMentions 와 함께 쓰면 알림 없이 이름만 보인다.
 func mention(userID string) string { return "<@" + userID + ">" }
+
+// ackSilently 는 화면을 바꾸지 않고 상호작용을 받았다고만 알린다.
+// 처리할 수 없는 버튼(모르는 동작, 패닉 등)에서 "상호작용 실패" 표시를 막는다.
+// 이미 응답한 상호작용이면 디스코드가 거절하고 로그만 남는다.
+func ackSilently(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if s == nil || i == nil || i.Interaction == nil { // 테스트는 세션 없이 라우터를 부른다
+		return
+	}
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
+	})
+	if err != nil {
+		log.Printf("상호작용 ack 실패: %v", err)
+	}
+}
+
+// expireButtons 는 끝난 판의 버튼을 누른 경우다. (1) 메시지의 버튼을 모두 끄고 (2) 누른 사람에게만 안내한다.
+// 봇이 비정상 종료돼 판이 사라진 메시지에 버튼이 남아 있을 때 쓴다(설계 문서 "만료 버튼").
+// 내용은 건드리지 않는다: 만료 정산과 경합해도 결과 화면을 클릭 당시의 모집 화면으로 덮지 않게.
+// (상호작용 응답은 content 를 항상 보내므로, ack 뒤에 버튼만 지우는 메시지 수정을 따로 한다.)
+func expireButtons(s *discordgo.Session, i *discordgo.InteractionCreate, text string) {
+	ackSilently(s, i)
+	if i.Message != nil {
+		none := []discordgo.MessageComponent{}
+		_, err := s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+			ID: i.Message.ID, Channel: i.ChannelID, Components: &none,
+		})
+		if err != nil {
+			log.Printf("만료 버튼 끄기 실패: %v", err)
+		}
+	}
+	_, err := s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+		Content:         text,
+		Flags:           discordgo.MessageFlagsEphemeral,
+		AllowedMentions: noMentions,
+	})
+	if err != nil {
+		log.Printf("만료 안내 실패: %v", err)
+	}
+}

@@ -160,6 +160,7 @@ func (n *Nudge) HandleComponent(s *discordgo.Session, i *discordgo.InteractionCr
 	text, ok := n.applyMute(i.ChannelID, id)
 	if !ok {
 		log.Printf("nudge 버튼 무시 (channel=%s action=%q arg=%q)", i.ChannelID, id.Action, id.Arg)
+		ackSilently(s, i)
 		return
 	}
 	updateMessage(s, i, text, nil)

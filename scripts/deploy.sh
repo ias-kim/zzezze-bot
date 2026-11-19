@@ -72,8 +72,12 @@ REMOTE_RESTART='
 set -u
 dir="$1"; svc="$2"
 sudo systemctl restart "$svc"
-sleep 3
-if ! systemctl is-active --quiet "$svc"; then
+# 기준값은 restart 직후에 읽는다(수동 restart 가 카운터를 초기화하는지와 상관없이 맞게).
+before=$(systemctl show -p NRestarts --value "$svc" 2>/dev/null || echo 0)
+# 게이트웨이 접속 실패처럼 몇 초 뒤에 죽는 경우도 잡도록 RestartSec(5초)보다 길게 기다린다.
+sleep 8
+after=$(systemctl show -p NRestarts --value "$svc" 2>/dev/null || echo 0)
+if ! systemctl is-active --quiet "$svc" || [ "$after" != "$before" ]; then
   echo "서비스가 active 가 아닙니다. 최근 로그:" >&2
   sudo journalctl -u "$svc" -n 20 --no-pager >&2 || true
   exit 1

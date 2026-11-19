@@ -91,3 +91,12 @@ func TestShutdownEdits(t *testing.T) {
 
 // 치킨 판 상태가 종료 인터페이스를 실제로 구현하는지 (W1 B 와의 계약).
 var _ closable = (*chickenState)(nil)
+
+func TestSafeRunReportsPanic(t *testing.T) {
+	if !safeRun("x", func() { panic("boom") }) {
+		t.Error("패닉이 있었는데 false")
+	}
+	if safeRun("x", func() {}) {
+		t.Error("패닉이 없었는데 true")
+	}
+}

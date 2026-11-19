@@ -47,6 +47,8 @@ main.go ──▶ features/ ──▶ yacht/ session/ voice/ config/ interaction
 | `voice/` | 모든 봇 대사(full/mild), 주사위 눈 | ✕ |
 | `session/` | 메시지 ID를 키로 판 상태 보관, 타이머, 종료 1회 보장, 유저 역인덱스 | ✕ |
 | `yacht/` | 순수 게임 로직 (`Score`, `Duel.Apply`, 치킨 판) | ✕ |
+| `quiet/` | 소음 제어 (쿨다운, "오늘 그만") | ✕ |
+| `timevote/` | 시간 투표 선택지 계산 (KST) | ✕ |
 | `store/` (2차) | SQLite 원장. 모든 함수가 `*sql.Tx`를 받음 | ✕ |
 | `features/` | 디스코드 이벤트 ↔ 순수 로직 변환, 화면 그리기 | ○ |
 

@@ -36,7 +36,9 @@ func main() {
 		discordgo.IntentMessageContent
 
 	dg.AddHandler(onReady)
-	dg.AddHandler(onMessageCreate)
+	// 기능 핸들러는 각자 config.Enabled 로 켜짐 여부를 확인한다.
+	// 메시지 원문은 로그에 남기지 않는다(운영 서버 로그에 대화가 쌓이지 않게).
+	// TODO(phase1 5단계): nudge 핸들러도 여기에 등록한다.
 	dg.AddHandler(features.NewAutoReply(quiet.New(features.MemeCooldown)).Handle)
 
 	if err := dg.Open(); err != nil {
@@ -57,26 +59,4 @@ func main() {
 func onReady(_ *discordgo.Session, r *discordgo.Ready) {
 	log.Printf("로그인 완료: %s (ID: %s)", r.User.Username, r.User.ID)
 	log.Printf("등록된 채널 수: %d", len(config.Channels))
-}
-
-// onMessageCreate 는 메시지가 올라올 때마다 호출된다.
-// 등록된 방의 메시지를 로그로 남긴다. 기능은 features/ 핸들러가 따로 등록되어
-// 각자 config.Enabled 로 켜짐 여부를 확인한다.
-func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	// 봇(자기 자신 포함)이 보낸 메시지는 무시한다.
-	if m.Author.Bot {
-		return
-	}
-
-	// 설정(config/channels.go)에 등록된 채널만 처리한다. 나머지는 무시.
-	cfg, ok := config.Lookup(m.ChannelID)
-	if !ok {
-		return
-	}
-
-	log.Printf("[%s] %s: %q  (features=%v, tone=%s)",
-		cfg.Name, m.Author.Username, m.Content, cfg.Features, cfg.Tone)
-
-	// TODO(phase1 5단계): nudge 핸들러도 위 AddHandler 옆에 등록한다.
-	_ = s
 }

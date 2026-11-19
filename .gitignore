@@ -29,3 +29,6 @@ coverage.*
 # Obsidian 학습 노트 (개인용)
 .obsidian/
 /StudyVault/
+
+# Claude Code 서브에이전트 워크트리 (임시)
+.claude/worktrees/

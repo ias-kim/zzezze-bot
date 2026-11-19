@@ -1,0 +1,30 @@
+# /etc/systemd/system/zzezze-bot.service 로 설치한다. (docs/deploy.md 참고)
+[Unit]
+Description=zzezze-bot Discord bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# 로그인 불가 전용 계정
+User=zzezze
+WorkingDirectory=/opt/zzezze-bot
+ExecStart=/opt/zzezze-bot/zzezze-bot
+# DISCORD_TOKEN 이 들어 있다. 권한 600. systemd 가 root 로 읽는다.
+EnvironmentFile=/opt/zzezze-bot/.env
+Restart=always
+RestartSec=5
+# 봇이 SIGTERM 을 받으면 최대 5초 동안 진행 중인 판의 버튼을 끈다.
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+# 가벼운 보안 옵션
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+# 2차(SQLite DB)부터 쓰기가 필요하다. data 디렉터리를 만든 뒤 주석을 풀 것.
+#ReadWritePaths=/opt/zzezze-bot/data
+
+[Install]
+WantedBy=multi-user.target

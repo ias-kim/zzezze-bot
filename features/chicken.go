@@ -174,16 +174,19 @@ func (c *Chicken) HandleComponent(s *discordgo.Session, i *discordgo.Interaction
 	switch id.Action {
 	case "open":
 		// 정산은 만료 타이머가 부르므로 s 를 캡처한다. 상태가 필요하면 state 로 받는다.
+		// 타이머 고루틴에서 불리므로 라우터의 패닉 복구 밖이다. 여기서 따로 감싼다.
 		onExpire := func(msgID string, state any) {
-			st, ok := state.(*chickenState)
-			if !ok {
-				log.Printf("치킨 만료: 상태 타입이 다르다 (msg=%s)", msgID)
-				return
-			}
-			text := chickenSettle(st.players, st.tone, c.Roll, c.Pick)
-			if err := editMessage(s, st.channelID, msgID, text, nil); err != nil {
-				log.Printf("치킨 결과 표시 실패 (msg=%s): %v", msgID, err)
-			}
+			safeRun("chicken settle", func() {
+				st, ok := state.(*chickenState)
+				if !ok {
+					log.Printf("치킨 만료: 상태 타입이 다르다 (msg=%s)", msgID)
+					return
+				}
+				text := chickenSettle(st.players, st.tone, c.Roll, c.Pick)
+				if err := editMessage(s, st.channelID, msgID, text, nil); err != nil {
+					log.Printf("치킨 결과 표시 실패 (msg=%s): %v", msgID, err)
+				}
+			})
 		}
 		text, err := chickenOpen(c.reg, i.Message.ID, i.ChannelID, user, tone, c.Pick, onExpire)
 		if err != nil {
